@@ -134,6 +134,9 @@ __pypackages__/
 celerybeat-schedule
 celerybeat.pid
 
+# Alembic
+alembic/versions
+
 # Redis
 *.rdb
 *.aof
