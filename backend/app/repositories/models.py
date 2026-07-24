@@ -17,4 +17,5 @@ class Url(Base):
     id         = Column(BigInteger, primary_key=True, autoincrement=True)
     code       = Column(String(10), unique=True, nullable=False, index=True)
     long_url   = Column(Text, unique=True, nullable=False, index=True)
+    short_url  = Column(Text, unique=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(IST))
