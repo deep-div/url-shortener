@@ -1,5 +1,5 @@
 from app.clients.postgresql import db_session
-from app.modules.models import Url
+from app.repositories.models import Url
 
 
 class UrlRepository:
