@@ -1,6 +1,7 @@
 import string
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.clients.redis import redis_client
 from app.modules.schema import ShortenResponse
@@ -14,8 +15,8 @@ REDIS_TTL = 60 * 60 * 24  * 1   # 1 day
 
 class UrlShortener:
 
-    def __init__(self):
-        self.repo = UrlRepository()
+    def __init__(self, session: Session):
+        self.repo = UrlRepository(session)
 
     def generate_short_code(self, url: str, base_url: str) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
@@ -73,11 +74,11 @@ class UrlShortener:
         return "".join(reversed(code))
 
 
-def run_url_shortener(url: str, base_url: str) -> ShortenResponse:
-    shortener = UrlShortener()
+def run_url_shortener(url: str, base_url: str, session: Session) -> ShortenResponse:
+    shortener = UrlShortener(session)
     return shortener.generate_short_code(url, base_url)
 
 
-def run_resolve_code(code: str) -> str | None:
-    shortener = UrlShortener()
+def run_resolve_code(code: str, session: Session) -> str | None:
+    shortener = UrlShortener(session)
     return shortener.resolve_code(code)
