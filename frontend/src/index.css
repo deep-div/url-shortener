@@ -251,14 +251,15 @@ img, svg { display: block; }
 .btn-analytics:hover { background: var(--border); color: var(--text); }
 .url-result-original {
   margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
-  font-size: 12px; color: var(--text-faint); font-family: var(--font-body);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; justify-content: center;
 }
-.url-result-original a {
-  color: var(--text-faint); text-decoration: none;
-  transition: color var(--transition);
+.url-result-redirect {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-family: var(--font-body); color: var(--text-muted);
+  text-decoration: none; transition: color var(--transition);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
-.url-result-original a:hover { color: var(--text-muted); }
+.url-result-redirect:hover { color: var(--text); }
 
 /* Stats Cards */
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 32px 0 56px; }
