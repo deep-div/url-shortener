@@ -67,7 +67,7 @@ export default function UrlResult({ result, originalUrl }) {
         </div>
 
         <div className="url-result-original">
-          → <a href={originalUrl} target="_blank" rel="noopener noreferrer" title={originalUrl}>{originalUrl}</a>
+          → <a href={short_url} target="_blank" rel="noopener noreferrer">{short_url}</a>
         </div>
       </div>
     </div>
