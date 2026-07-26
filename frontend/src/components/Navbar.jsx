@@ -19,15 +19,8 @@ export default function NavBar() {
             </div>
             snip
           </Link>
-
-          <div className="navbar-nav">
-            <Link to="/dashboard" className="nav-link">
-              Recent links
-            </Link>
-          </div>
         </div>
       </div>
     </nav>
   );
 }
-

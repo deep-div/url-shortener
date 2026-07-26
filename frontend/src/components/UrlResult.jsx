@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useClipboard } from '../hooks/useClipboard.js';
 
@@ -32,65 +31,43 @@ function BarIcon() {
 export default function UrlResult({ result, originalUrl }) {
   const { short_url, code } = result;
   const { copied, copy } = useClipboard();
-  const [displayed, setDisplayed] = useState('');
-  const [typing, setTyping] = useState(true);
-
-  // Signature element: character-by-character reveal of the shortened URL
-  useEffect(() => {
-    setDisplayed('');
-    setTyping(true);
-    let i = 0;
-    const interval = setInterval(() => {
-      i += 1;
-      setDisplayed(short_url.slice(0, i));
-      if (i >= short_url.length) {
-        clearInterval(interval);
-        setTyping(false);
-      }
-    }, 28);
-    return () => clearInterval(interval);
-  }, [short_url]);
 
   return (
-    <div className="url-result" role="region" aria-label="Shortened URL result" aria-live="polite">
+    <div className="url-result" role="region" aria-label="Shortened URL result">
       <div className="url-result-header">
         <div className="url-result-dot" aria-hidden="true" />
         <span>link ready</span>
       </div>
 
       <div className="url-result-body">
-        <div className="url-result-short-label">Your short link</div>
         <div className="url-result-short">
           <div className="short-code-display" aria-label={`Shortened URL: ${short_url}`}>
-            {displayed}
-            {typing && <span className="short-code-cursor" aria-hidden="true" />}
+            {short_url}
           </div>
 
-          {!typing && (
-            <div className="url-result-actions">
-              <button
-                className={`btn-copy${copied ? ' copied' : ''}`}
-                onClick={() => copy(short_url)}
-                aria-label={copied ? 'Copied to clipboard' : 'Copy short URL to clipboard'}
-              >
-                {copied ? <CheckIcon /> : <CopyIcon />}
-                {copied ? 'Copied' : 'Copy'}
-              </button>
+          <div className="url-result-actions">
+            <button
+              className={`btn-copy${copied ? ' copied' : ''}`}
+              onClick={() => copy(short_url)}
+              aria-label={copied ? 'Copied to clipboard' : 'Copy short URL to clipboard'}
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
 
-              <Link
-                to={`/analytics/${code}`}
-                className="btn-analytics"
-                aria-label={`View analytics for /${code}`}
-              >
-                <BarIcon />
-                Analytics
-              </Link>
-            </div>
-          )}
+            <Link
+              to={`/analytics/${code}`}
+              className="btn-analytics"
+              aria-label={`View analytics for /${code}`}
+            >
+              <BarIcon />
+              Analytics
+            </Link>
+          </div>
         </div>
 
-        <div className="url-result-original" title={originalUrl}>
-          → {originalUrl}
+        <div className="url-result-original">
+          → <a href={originalUrl} target="_blank" rel="noopener noreferrer" title={originalUrl}>{originalUrl}</a>
         </div>
       </div>
     </div>
