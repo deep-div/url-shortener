@@ -2,7 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Re
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
-from app.modules.request_processor import run_request_processor
+from app.modules.security import run_security
 from app.modules.url_shortner import run_url_shortener, run_resolve_code
 from app.modules.url_analytics import run_url_analytics, run_get_url_stats, run_get_dashboard
 from app.modules.schema import UrlStatsResponse, DashboardResponse
@@ -14,7 +14,7 @@ router = APIRouter()
 async def shorten_url(request: Request, db: AsyncSession = Depends(get_db), url: str = Form(...)):
     ip = request.client.host if request.client else "unknown"
     try:
-        await run_request_processor(ip, url)
+        await run_security(ip, url)
     except PermissionError as e:
         raise HTTPException(status_code=429, detail=str(e))
     except ValueError as e:

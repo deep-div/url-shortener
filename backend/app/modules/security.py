@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 from app.clients.redis import redis_client
 
-class RequestProcessor:
+class Security:
 
     RATE_LIMIT = 10
     WINDOW_SECONDS = 60
@@ -37,7 +37,7 @@ class RequestProcessor:
         return True
 
 
-async def run_request_processor(ip: str, url: str):
-    processor = RequestProcessor()
-    await processor.check_rate_limit(ip)
-    processor.validate_url(url)
+async def run_security(ip: str, url: str):
+    security = Security()
+    await security.check_rate_limit(ip)
+    security.validate_url(url)
