@@ -32,7 +32,7 @@ def redirect_to_url(code: str, request: Request, db: Session = Depends(get_db)):
 
     run_url_analytics(code, request, db)
 
-    return RedirectResponse(url=long_url, status_code=301)
+    return RedirectResponse(url=long_url, status_code=302)
 
 
 @router.get("/analytics/dashboard", response_model=DashboardResponse)

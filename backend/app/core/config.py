@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
 
     LOG_LEVEL: str
+    ENVIRONMENT: str
 
     class Config:
         env_file = ".env"

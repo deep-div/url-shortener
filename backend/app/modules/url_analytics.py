@@ -4,32 +4,33 @@ import pytz
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem
+from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType, ReferrerType
 from app.repositories.url_repository import UrlRepository
 
 import user_agents
 
 IST = pytz.timezone("Asia/Kolkata")
 
-
 class UrlAnalytics:
 
     def parse_click_data(self, code: str, request: Request) -> AnalyticsResponse:
         ip = request.client.host if request.client else None
-
         raw_ua = request.headers.get("user-agent", "")
         device, browser, os_name = None, None, None
 
         if raw_ua:
             ua = user_agents.parse(raw_ua)
             if ua.is_mobile:
-                device = "Mobile"
+                device = DeviceType.Mobile
             elif ua.is_tablet:
-                device = "Tablet"
+                device = DeviceType.Tablet
+            elif ua.is_pc:
+                device = DeviceType.Desktop
             else:
-                device = "Desktop"
+                device = DeviceType.Other
             browser = ua.browser.family or None
-            os_name = ua.os.family or None
+            raw_os = ua.os.family or ""
+            os_name = OsType.from_ua(raw_os) if raw_os else None
 
         raw_referrer = request.headers.get("referer") or request.headers.get("referrer")
         referrer = self._parse_referrer(raw_referrer)
@@ -42,27 +43,25 @@ class UrlAnalytics:
             browser=browser,
             os=os_name,
             referrer=referrer,
-            country=None,
-            city=None,
         )
 
-    def _parse_referrer(self, raw: str | None) -> str | None:
+    def _parse_referrer(self, raw: str | None) -> ReferrerType:
         if not raw:
-            return "Direct"
+            return ReferrerType.Direct
         raw = raw.lower()
         if "google" in raw:
-            return "Google"
+            return ReferrerType.Google
         if "twitter" in raw or "t.co" in raw:
-            return "Twitter"
+            return ReferrerType.Twitter
         if "linkedin" in raw:
-            return "LinkedIn"
+            return ReferrerType.LinkedIn
         if "facebook" in raw or "fb.com" in raw:
-            return "Facebook"
+            return ReferrerType.Facebook
         if "instagram" in raw:
-            return "Instagram"
+            return ReferrerType.Instagram
         if "youtube" in raw:
-            return "YouTube"
-        return raw
+            return ReferrerType.YouTube
+        return ReferrerType.Other
 
 
 class UrlAnalyticsDashboard:
@@ -78,7 +77,6 @@ class UrlAnalyticsDashboard:
             by_browser=repo.get_breakdown(code, "browser"),
             by_os=repo.get_breakdown(code, "os"),
             by_referrer=repo.get_breakdown(code, "referrer"),
-            by_country=repo.get_breakdown(code, "country"),
         )
 
     def get_dashboard(self, db: Session) -> DashboardResponse:
