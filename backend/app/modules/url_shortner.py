@@ -33,17 +33,17 @@ class UrlShortener:
             redis_client.set(f"code:{row.code}", row.long_url, ex=REDIS_TTL)
             return ShortenResponse(code=row.code, short_url=row.short_url)
 
-        # brand new URL — random code, retry on the rare collision
+        # Worst case, brand new URL — random code, retry on the rare collision
         while True:
             code = self._random_code()
             short_url = f"{base_url}/{code}"
             try:
-                self.repo.save(code, url, short_url)
+                self.repo.save(code, url, short_url)  ## Save in postgres
                 break
             except IntegrityError:
                 continue
 
-        redis_client.set(f"url:{url}", code, ex=REDIS_TTL)
+        redis_client.set(f"url:{url}", code, ex=REDIS_TTL) ## Save in Redis
         redis_client.set(f"code:{code}", url, ex=REDIS_TTL)
 
         return ShortenResponse(code=code, short_url=short_url)
