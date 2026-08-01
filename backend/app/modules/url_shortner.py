@@ -23,7 +23,7 @@ class UrlShortener:
         # check Redis cache — fastest path, no DB touch
         existing_code = cached_code or await redis_client.get(f"url:{url}")
         if existing_code: 
-            if cached_ttl < REFRESH_THRESHOLD:
+            if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
                 pipe = redis_client.pipeline()
                 pipe.expire(f"url:{url}", REDIS_TTL)
                 pipe.expire(f"code:{existing_code}", REDIS_TTL)
@@ -57,22 +57,23 @@ class UrlShortener:
         return ShortenResponse(code=code, short_url=short_url)
 
     async def resolve_code(self, code: str) -> str | None:
-        # check Redis cache
-        existing = await redis_client.get(f"code:{code}")
+        # check Redis cache — 1 round-trip for GET + TTL together
+        pipe = redis_client.pipeline()
+        pipe.get(f"code:{code}")
+        pipe.ttl(f"code:{code}")
+        existing, ttl = await pipe.execute()
         if existing:
-            pipe = redis_client.pipeline()
-            pipe.expire(f"code:{code}", REDIS_TTL)
-            pipe.expire(f"url:{existing}", REDIS_TTL)
-            await pipe.execute()
+            if ttl != -1 and ttl < REFRESH_THRESHOLD:
+                pipe = redis_client.pipeline()
+                pipe.expire(f"code:{code}", REDIS_TTL)
+                pipe.expire(f"url:{existing}", REDIS_TTL)
+                await pipe.execute()
             return existing
 
         # cache miss — check PostgreSQL
         row = await self.repo.get_by_code(code)
         if row:
-            pipe = redis_client.pipeline()
-            pipe.set(f"code:{row.code}", row.long_url, ex=REDIS_TTL)
-            pipe.set(f"url:{row.long_url}", row.code, ex=REDIS_TTL)
-            await pipe.execute()
+            await redis_client.set(f"code:{code}", row.long_url, ex=REDIS_TTL)
             return row.long_url
 
         return None
