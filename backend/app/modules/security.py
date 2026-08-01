@@ -4,10 +4,10 @@ from urllib.parse import urlparse
 from app.clients.redis import redis_client
 from app.workers.code_pool import POOL_KEY
 
+RATE_LIMIT = 10
+WINDOW_SECONDS = 60
+    
 class Security:
-
-    RATE_LIMIT = 10
-    WINDOW_SECONDS = 60
 
     async def check_rate_limit_with_cache(self, ip: str, url: str) -> tuple[str | None, int, str | None]:
         key = f"rate:{ip}"
