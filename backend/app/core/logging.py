@@ -8,7 +8,7 @@ from app.core.config import settings
 
 
 # Maximum number of log entries kept in the file before oldest are trimmed
-MAX_LOG_LINES = 50
+MAX_LOG_LINES = 500
 
 
 class JsonFormatter(logging.Formatter):

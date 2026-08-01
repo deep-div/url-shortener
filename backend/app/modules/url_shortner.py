@@ -10,7 +10,8 @@ from app.repositories.url_repository import UrlRepository
 
 BASE62 = string.digits + string.ascii_letters  
 CODE_LEN = 7
-REDIS_TTL = 60 * 60 * 24 * 30   # 30 days
+REDIS_TTL = 60 * 60 * 24 * 30        # 30 days
+REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
 
 
 class UrlShortener:
@@ -18,14 +19,15 @@ class UrlShortener:
     def __init__(self, session: AsyncSession):
         self.repo = UrlRepository(session)
 
-    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None) -> ShortenResponse:
+    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
         existing_code = cached_code or await redis_client.get(f"url:{url}")
-        if existing_code:
-            pipe = redis_client.pipeline()
-            pipe.expire(f"url:{url}", REDIS_TTL)
-            pipe.expire(f"code:{existing_code}", REDIS_TTL)
-            await pipe.execute()
+        if existing_code: 
+            if cached_ttl < REFRESH_THRESHOLD:
+                pipe = redis_client.pipeline()
+                pipe.expire(f"url:{url}", REDIS_TTL)
+                pipe.expire(f"code:{existing_code}", REDIS_TTL)
+                await pipe.execute()
             return ShortenResponse(code=existing_code, short_url=f"{base_url}/{existing_code}")
 
         # cache miss — check PostgreSQL
@@ -79,9 +81,9 @@ class UrlShortener:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
 
 
-async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None) -> ShortenResponse:
+async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
     shortener = UrlShortener(session)
-    return await shortener.generate_short_code(url, base_url, cached_code)
+    return await shortener.generate_short_code(url, base_url, cached_code, cached_ttl)
 
 
 async def run_resolve_code(code: str, session: AsyncSession) -> str | None:

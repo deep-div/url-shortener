@@ -19,12 +19,13 @@ class Security:
         pipe.zadd(key, {str(now_ms): now_ms})
         pipe.expire(key, self.WINDOW_SECONDS)
         pipe.get(f"url:{url}")                   # [4] cached short code or None
-        results = await pipe.execute()
+        pipe.ttl(f"url:{url}")                   # [5] remaining TTL in seconds
+        results = await pipe.execute()           # pipe.execute(), 1 trip, pipe comand is a trip to redis, to avoid round trips
 
         if results[1] >= self.RATE_LIMIT:
             raise PermissionError(f"IP {ip} exceeded {self.RATE_LIMIT} req/{self.WINDOW_SECONDS}s")
 
-        return results[4]
+        return results[4], results[5]
 
     def validate_url(self, url: str) -> bool:
         parsed = urlparse(url)
