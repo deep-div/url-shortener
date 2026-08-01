@@ -43,10 +43,14 @@ class UrlShortener:
             try:
                 await self.repo.save(code, url, short_url)
             except IntegrityError as e:
-                if getattr(e.orig, 'constraint_name', None) == 'ix_urls_long_url':
+                constraint = getattr(e.orig, 'constraint_name', None)
+                if constraint == 'ix_urls_long_url':       # same URL already shortened — return existing
                     return await self._fetch_existing(url)
-                fallback_reason = "pool_code_collision"
-                code = None
+                if constraint in ('ix_urls_code', 'urls_short_url_key'):  # code taken by another URL — retry
+                    fallback_reason = "pool_code_collision"
+                    code = None
+                else:
+                    raise                                  # unexpected constraint — surface the error
 
         ## Fallback
         if not code:
@@ -58,9 +62,12 @@ class UrlShortener:
                     await self.repo.save(code, url, short_url)
                     break
                 except IntegrityError as e:
-                    if getattr(e.orig, 'constraint_name', None) == 'ix_urls_long_url':
+                    constraint = getattr(e.orig, 'constraint_name', None)
+                    if constraint == 'ix_urls_long_url':
                         return await self._fetch_existing(url)
-                    continue
+                    if constraint in ('ix_urls_code', 'urls_short_url_key'):
+                        continue
+                    raise
 
         pipe = redis_client.pipeline()
         pipe.set(f"url:{url}", code, ex=REDIS_TTL)
