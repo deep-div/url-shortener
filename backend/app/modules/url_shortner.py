@@ -1,4 +1,3 @@
-import asyncio
 import secrets
 import string
 
@@ -22,7 +21,7 @@ class UrlShortener:
     def __init__(self, session: AsyncSession):
         self.repo = UrlRepository(session)
 
-    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None, cached_ttl: int = -1, pool_code: str | None = None) -> ShortenResponse:
+    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
         existing_code = cached_code or await redis_client.get(f"url:{url}")
         if existing_code:
@@ -31,14 +30,11 @@ class UrlShortener:
                 pipe.expire(f"url:{url}", REDIS_TTL)
                 pipe.expire(f"code:{existing_code}", REDIS_TTL)
                 await pipe.execute()
-            # return unused pool code back (fire-and-forget)
-            if pool_code:
-                asyncio.create_task(redis_client.rpush(POOL_KEY, pool_code))
             return ShortenResponse(code=existing_code, short_url=f"{base_url}/{existing_code}")
 
-        # Use pre-fetched pool code from security pipeline (saves 1 Redis RT)
+        # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
         fallback_reason = None
-        code = pool_code
+        code = await redis_client.lpop(POOL_KEY)
         if not code:
             fallback_reason = "pool_empty"
 
@@ -48,8 +44,7 @@ class UrlShortener:
                 await self.repo.save(code, url, short_url)
             except IntegrityError as e:
                 if "ix_urls_long_url" in str(e.orig):
-                    # Cold-cache hit — URL already exists, return existing mapping
-                    return await self.get_long_url(url)
+                    return await self._fetch_existing(url)
                 fallback_reason = "pool_code_collision"
                 code = None
 
@@ -64,17 +59,17 @@ class UrlShortener:
                     break
                 except IntegrityError as e:
                     if "ix_urls_long_url" in str(e.orig):
-                        return await self.get_long_url(url)
+                        return await self._fetch_existing(url)
                     continue
 
         pipe = redis_client.pipeline()
         pipe.set(f"url:{url}", code, ex=REDIS_TTL)
         pipe.set(f"code:{code}", url, ex=REDIS_TTL)
-        asyncio.create_task(pipe.execute())
+        await pipe.execute()
 
         return ShortenResponse(code=code, short_url=short_url)
 
-    async def get_long_url(self, url: str) -> ShortenResponse:
+    async def _fetch_existing(self, url: str) -> ShortenResponse:
         row = await self.repo.get_by_long_url(url)
         pipe = redis_client.pipeline()
         pipe.set(f"url:{row.long_url}", row.code, ex=REDIS_TTL)
@@ -108,9 +103,9 @@ class UrlShortener:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
 
 
-async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1, pool_code: str | None = None) -> ShortenResponse:
+async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
     shortener = UrlShortener(session)
-    return await shortener.generate_short_code(url, base_url, cached_code, cached_ttl, pool_code)
+    return await shortener.generate_short_code(url, base_url, cached_code, cached_ttl)
 
 
 async def run_resolve_code(code: str, session: AsyncSession) -> str | None:

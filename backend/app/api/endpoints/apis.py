@@ -20,12 +20,12 @@ async def shorten_url(request: Request, db: AsyncSession = Depends(get_db), url:
         raise HTTPException(status_code=400, detail=str(e))
 
     try:
-        cached_code, cached_ttl, pool_code = await _security.check_rate_limit_with_cache(ip, url)
+        cached_code, cached_ttl = await _security.check_rate_limit_with_cache(ip, url)
     except PermissionError as e:
         raise HTTPException(status_code=429, detail=str(e))
 
     base_url = str(request.base_url).rstrip("/")
-    return await run_url_shortener(url, base_url, db, cached_code, cached_ttl, pool_code)
+    return await run_url_shortener(url, base_url, db, cached_code, cached_ttl)
 
 
 @router.get("/{code}")
