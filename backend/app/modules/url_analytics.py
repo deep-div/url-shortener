@@ -2,10 +2,11 @@ import datetime
 import pytz
 
 from fastapi import Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType, ReferrerType
 from app.repositories.url_repository import UrlRepository
+from app.clients.postgresql import AsyncSessionLocal
 
 import user_agents
 
@@ -66,37 +67,39 @@ class UrlAnalytics:
 
 class UrlAnalyticsDashboard:
 
-    def get_url_stats(self, code: str, db: Session) -> UrlStatsResponse:
+    async def get_url_stats(self, code: str, db: AsyncSession) -> UrlStatsResponse:
         repo = UrlRepository(db)
         return UrlStatsResponse(
             code=code,
-            total_clicks=repo.get_total_clicks(code),
-            unique_clicks=repo.get_unique_clicks(code),
-            clicks_by_day=[ClicksByDayItem(**r) for r in repo.get_clicks_by_day(code)],
-            by_device=repo.get_breakdown(code, "device"),
-            by_browser=repo.get_breakdown(code, "browser"),
-            by_os=repo.get_breakdown(code, "os"),
-            by_referrer=repo.get_breakdown(code, "referrer"),
+            total_clicks=await repo.get_total_clicks(code),
+            unique_clicks=await repo.get_unique_clicks(code),
+            clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code)],
+            by_device=await repo.get_breakdown(code, "device"),
+            by_browser=await repo.get_breakdown(code, "browser"),
+            by_os=await repo.get_breakdown(code, "os"),
+            by_referrer=await repo.get_breakdown(code, "referrer"),
         )
 
-    def get_dashboard(self, db: Session) -> DashboardResponse:
+    async def get_dashboard(self, db: AsyncSession) -> DashboardResponse:
         repo = UrlRepository(db)
         return DashboardResponse(
-            total_urls=repo.get_total_urls(),
-            total_clicks=repo.get_total_clicks_all(),
-            clicks_today=repo.get_clicks_today(),
-            top_urls=[TopUrlItem(**r) for r in repo.get_top_urls()],
+            total_urls=await repo.get_total_urls(),
+            total_clicks=await repo.get_total_clicks_all(),
+            clicks_today=await repo.get_clicks_today(),
+            top_urls=[TopUrlItem(**r) for r in await repo.get_top_urls()],
         )
 
 
-def run_get_url_stats(code: str, db: Session) -> UrlStatsResponse:
-    return UrlAnalyticsDashboard().get_url_stats(code, db)
+async def run_get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
+    return await UrlAnalyticsDashboard().get_url_stats(code, db)
 
 
-def run_get_dashboard(db: Session) -> DashboardResponse:
-    return UrlAnalyticsDashboard().get_dashboard(db)
+async def run_get_dashboard(db: AsyncSession) -> DashboardResponse:
+    return await UrlAnalyticsDashboard().get_dashboard(db)
 
-def run_url_analytics(code: str, request: Request, db: Session) -> AnalyticsResponse:
+
+async def run_url_analytics(code: str, request: Request) -> None:
+    """Background task — creates its own DB session, off the critical path."""
     click = UrlAnalytics().parse_click_data(code, request)
-    UrlRepository(db).save_analytics(click)
-    return click
+    async with AsyncSessionLocal() as db:
+        await UrlRepository(db).save_analytics(click)

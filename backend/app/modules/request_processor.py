@@ -8,7 +8,7 @@ class RequestProcessor:
     RATE_LIMIT = 10
     WINDOW_SECONDS = 60
 
-    def check_rate_limit(self, ip: str) -> bool:
+    async def check_rate_limit(self, ip: str) -> bool:
         key = f"rate:{ip}"
         now_ms = int(time.time() * 1000)
         window_start_ms = now_ms - (self.WINDOW_SECONDS * 1000)
@@ -18,7 +18,7 @@ class RequestProcessor:
         pipe.zcard(key)
         pipe.zadd(key, {str(now_ms): now_ms})
         pipe.expire(key, self.WINDOW_SECONDS)
-        results = pipe.execute()
+        results = await pipe.execute()
 
         if results[1] >= self.RATE_LIMIT:
             raise PermissionError(f"IP {ip} exceeded {self.RATE_LIMIT} req/{self.WINDOW_SECONDS}s")
@@ -37,7 +37,7 @@ class RequestProcessor:
         return True
 
 
-def run_request_processor(ip: str, url: str):
+async def run_request_processor(ip: str, url: str):
     processor = RequestProcessor()
-    processor.check_rate_limit(ip)
+    await processor.check_rate_limit(ip)
     processor.validate_url(url)
