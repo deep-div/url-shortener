@@ -43,7 +43,7 @@ class UrlShortener:
             try:
                 await self.repo.save(code, url, short_url)
             except IntegrityError as e:
-                if "ix_urls_long_url" in str(e.orig):
+                if getattr(e.orig, 'constraint_name', None) == 'ix_urls_long_url':
                     return await self._fetch_existing(url)
                 fallback_reason = "pool_code_collision"
                 code = None
@@ -58,7 +58,7 @@ class UrlShortener:
                     await self.repo.save(code, url, short_url)
                     break
                 except IntegrityError as e:
-                    if "ix_urls_long_url" in str(e.orig):
+                    if getattr(e.orig, 'constraint_name', None) == 'ix_urls_long_url':
                         return await self._fetch_existing(url)
                     continue
 
