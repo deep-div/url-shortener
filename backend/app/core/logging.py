@@ -4,6 +4,8 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
+from app.core.config import settings
+
 
 # Maximum number of log entries kept in the file before oldest are trimmed
 MAX_LOG_LINES = 50
@@ -73,7 +75,7 @@ class _CappedFileHandler(logging.FileHandler):
 
 # Setup logger
 logger = logging.getLogger("service_logger")
-logger.setLevel(logging.INFO)
+logger.setLevel(getattr(logging, settings.LOG_LEVEL.upper(), logging.WARNING))
 logger.propagate = False
 
 if not logger.handlers:
