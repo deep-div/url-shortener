@@ -1,9 +1,23 @@
+import asyncio
+from contextlib import asynccontextmanager, suppress
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import router
+from app.workers.code_pool import run_code_pool_worker
 
-app = FastAPI(title="URL Shortener")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(run_code_pool_worker())
+    yield
+    task.cancel()
+    with suppress(asyncio.CancelledError):
+        await task
+
+
+app = FastAPI(title="URL Shortener", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
