@@ -34,6 +34,7 @@ class UrlShortener:
 
         # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
         fallback_reason = None
+        # code = "dsrueAN"  # TEST HARDCODE
         code = await redis_client.lpop(POOL_KEY)
         if not code:
             fallback_reason = "pool_empty"
@@ -42,15 +43,12 @@ class UrlShortener:
             short_url = f"{base_url}/{code}"
             try:
                 await self.repo.save(code, url, short_url)
-            except IntegrityError as e:
-                constraint = getattr(e.orig, 'constraint_name', None)
-                if constraint == 'ix_urls_long_url':       # same URL already shortened — return existing
+            except IntegrityError:
+                existing = await self.repo.get_by_long_url(url)
+                if existing:
                     return await self._fetch_existing(url)
-                if constraint in ('ix_urls_code', 'urls_short_url_key'):  # code taken by another URL — retry
-                    fallback_reason = "pool_code_collision"
-                    code = None
-                else:
-                    raise                                  # unexpected constraint — surface the error
+                fallback_reason = "pool_code_collision"
+                code = None
 
         ## Fallback
         if not code:
@@ -61,13 +59,11 @@ class UrlShortener:
                 try:
                     await self.repo.save(code, url, short_url)
                     break
-                except IntegrityError as e:
-                    constraint = getattr(e.orig, 'constraint_name', None)
-                    if constraint == 'ix_urls_long_url':
+                except IntegrityError:
+                    existing = await self.repo.get_by_long_url(url)
+                    if existing:
                         return await self._fetch_existing(url)
-                    if constraint in ('ix_urls_code', 'urls_short_url_key'):
-                        continue
-                    raise
+                    continue
 
         pipe = redis_client.pipeline()
         pipe.set(f"url:{url}", code, ex=REDIS_TTL)
