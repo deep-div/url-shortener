@@ -8,22 +8,23 @@ class Security:
     RATE_LIMIT = 10
     WINDOW_SECONDS = 60
 
-    async def check_rate_limit(self, ip: str) -> bool:
+    async def check_rate_limit_with_cache(self, ip: str, url: str) -> str | None:
         key = f"rate:{ip}"
         now_ms = int(time.time() * 1000)
         window_start_ms = now_ms - (self.WINDOW_SECONDS * 1000)
 
         pipe = redis_client.pipeline()
         pipe.zremrangebyscore(key, 0, window_start_ms)
-        pipe.zcard(key)
+        pipe.zcard(key)                          # [1] count
         pipe.zadd(key, {str(now_ms): now_ms})
         pipe.expire(key, self.WINDOW_SECONDS)
+        pipe.get(f"url:{url}")                   # [4] cached short code or None
         results = await pipe.execute()
 
         if results[1] >= self.RATE_LIMIT:
             raise PermissionError(f"IP {ip} exceeded {self.RATE_LIMIT} req/{self.WINDOW_SECONDS}s")
 
-        return True
+        return results[4]
 
     def validate_url(self, url: str) -> bool:
         parsed = urlparse(url)
@@ -36,8 +37,4 @@ class Security:
 
         return True
 
-
-async def run_security(ip: str, url: str):
-    security = Security()
-    await security.check_rate_limit(ip)
-    security.validate_url(url)
+_security = Security()

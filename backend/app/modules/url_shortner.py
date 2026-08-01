@@ -18,9 +18,9 @@ class UrlShortener:
     def __init__(self, session: AsyncSession):
         self.repo = UrlRepository(session)
 
-    async def generate_short_code(self, url: str, base_url: str) -> ShortenResponse:
+    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
-        existing_code = await redis_client.get(f"url:{url}")
+        existing_code = cached_code or await redis_client.get(f"url:{url}")
         if existing_code:
             pipe = redis_client.pipeline()
             pipe.expire(f"url:{url}", REDIS_TTL)
@@ -79,9 +79,9 @@ class UrlShortener:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
 
 
-async def run_url_shortener(url: str, base_url: str, session: AsyncSession) -> ShortenResponse:
+async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None) -> ShortenResponse:
     shortener = UrlShortener(session)
-    return await shortener.generate_short_code(url, base_url)
+    return await shortener.generate_short_code(url, base_url, cached_code)
 
 
 async def run_resolve_code(code: str, session: AsyncSession) -> str | None:

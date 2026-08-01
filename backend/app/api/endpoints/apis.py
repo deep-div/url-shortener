@@ -2,7 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Re
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
-from app.modules.security import run_security
+from app.modules.security import _security
 from app.modules.url_shortner import run_url_shortener, run_resolve_code
 from app.modules.url_analytics import run_url_analytics, run_get_url_stats, run_get_dashboard
 from app.modules.schema import UrlStatsResponse, DashboardResponse
@@ -13,15 +13,19 @@ router = APIRouter()
 @router.post("/shorten")
 async def shorten_url(request: Request, db: AsyncSession = Depends(get_db), url: str = Form(...)):
     ip = request.client.host if request.client else "unknown"
+
     try:
-        await run_security(ip, url)
-    except PermissionError as e:
-        raise HTTPException(status_code=429, detail=str(e))
+        _security.validate_url(url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    try:
+        cached_code = await _security.check_rate_limit_with_cache(ip, url)
+    except PermissionError as e:
+        raise HTTPException(status_code=429, detail=str(e))
+
     base_url = str(request.base_url).rstrip("/")
-    return await run_url_shortener(url, base_url, db)
+    return await run_url_shortener(url, base_url, db, cached_code)
 
 
 @router.get("/{code}")
