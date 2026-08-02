@@ -9,7 +9,6 @@ DATABASE_URL = (
 
 engine = create_async_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
     connect_args={"ssl": "require"},
 )
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
