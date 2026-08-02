@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
 
+    BASE_URL: str
+
     LOG_LEVEL: str
     ENVIRONMENT: str
 

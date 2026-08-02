@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.redis import redis_client
+from app.core.config import settings
 from app.core.logging import logger
 from app.modules.schema import ShortenResponse
 from app.repositories.url_repository import UrlRepository
@@ -14,6 +15,7 @@ BASE62 = string.digits + string.ascii_letters
 CODE_LEN = 7
 REDIS_TTL = 60 * 60 * 24 * 30        # 30 days
 REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
+BASE_URL = settings.BASE_URL.rstrip("/")
 
 
 class UrlShortener:
@@ -21,7 +23,7 @@ class UrlShortener:
     def __init__(self, session: AsyncSession):
         self.repo = UrlRepository(session)
 
-    async def generate_short_code(self, url: str, base_url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
+    async def generate_short_code(self, url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
         existing_code = cached_code or await redis_client.get(f"url:{url}")
         if existing_code:
@@ -30,22 +32,23 @@ class UrlShortener:
                 pipe.expire(f"url:{url}", REDIS_TTL)
                 pipe.expire(f"code:{existing_code}", REDIS_TTL)
                 await pipe.execute()
-            return ShortenResponse(code=existing_code, short_url=f"{base_url}/{existing_code}")
+            return ShortenResponse(code=existing_code, short_url=f"{BASE_URL}/{existing_code}")
 
         # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
         fallback_reason = None
         code = await redis_client.lpop(POOL_KEY)
+
         if not code:
             fallback_reason = "pool_empty"
 
         if code:
-            short_url = f"{base_url}/{code}"
+            short_url = f"{BASE_URL}/{code}"
             try:
-                await self.repo.save(code, url, short_url)
+                 # if url is there i update same url and return same code 
+                row, existed = await self.repo.save_or_get(code, url, short_url)
+                if existed:
+                    return await self.cache_and_return(row)
             except IntegrityError:
-                existing = await self.repo.get_by_long_url(url)
-                if existing:
-                    return await self._fetch_existing(url)
                 fallback_reason = "pool_code_collision"
                 code = None
 
@@ -54,14 +57,13 @@ class UrlShortener:
             logger.warning(f"Fallback because {fallback_reason} for {url}")
             while True:
                 code = self._random_code()
-                short_url = f"{base_url}/{code}"
+                short_url = f"{BASE_URL}/{code}"
                 try:
-                    await self.repo.save(code, url, short_url)
+                    row, existed = await self.repo.save_or_get(code, url, short_url)
+                    if existed:
+                        return await self.cache_and_return(row)
                     break
                 except IntegrityError:
-                    existing = await self.repo.get_by_long_url(url)
-                    if existing:
-                        return await self._fetch_existing(url)
                     continue
 
         pipe = redis_client.pipeline()
@@ -71,8 +73,7 @@ class UrlShortener:
 
         return ShortenResponse(code=code, short_url=short_url)
 
-    async def _fetch_existing(self, url: str) -> ShortenResponse:
-        row = await self.repo.get_by_long_url(url)
+    async def cache_and_return(self, row) -> ShortenResponse:
         pipe = redis_client.pipeline()
         pipe.set(f"url:{row.long_url}", row.code, ex=REDIS_TTL)
         pipe.set(f"code:{row.code}", row.long_url, ex=REDIS_TTL)
@@ -105,9 +106,9 @@ class UrlShortener:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
 
 
-async def run_url_shortener(url: str, base_url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
+async def run_url_shortener(url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
     shortener = UrlShortener(session)
-    return await shortener.generate_short_code(url, base_url, cached_code, cached_ttl)
+    return await shortener.generate_short_code(url, cached_code, cached_ttl)
 
 
 async def run_resolve_code(code: str, session: AsyncSession) -> str | None:

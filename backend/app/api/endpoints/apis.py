@@ -24,8 +24,7 @@ async def shorten_url(request: Request, db: AsyncSession = Depends(get_db), url:
     except PermissionError as e:
         raise HTTPException(status_code=429, detail=str(e))
 
-    base_url = str(request.base_url).rstrip("/")
-    return await run_url_shortener(url, base_url, db, cached_code, cached_ttl)
+    return await run_url_shortener(url, db, cached_code, cached_ttl)
 
 
 @router.get("/{code}")
