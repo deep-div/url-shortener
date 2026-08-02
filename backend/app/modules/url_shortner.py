@@ -17,6 +17,9 @@ REDIS_TTL = 60 * 60 * 24 * 30        # 30 days
 REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
 BASE_URL = settings.BASE_URL.rstrip("/")
 
+# Cached URL: 1 Redis read. Can't go lower.
+# New URL: 1 Redis read + 1 DB write. Can't go lower.
+# Fallback: 1 Redis read + 1 DB write per attempt. Same.
 
 class UrlShortener:
 
