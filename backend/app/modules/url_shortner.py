@@ -34,7 +34,6 @@ class UrlShortener:
 
         # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
         fallback_reason = None
-        # code = "dsrueAN"  # TEST HARDCODE
         code = await redis_client.lpop(POOL_KEY)
         if not code:
             fallback_reason = "pool_empty"
@@ -52,7 +51,7 @@ class UrlShortener:
 
         ## Fallback
         if not code:
-            logger.warning("shortener_fallback_to_random", extra={"reason": fallback_reason, "url": url})
+            logger.warning(f"Fallback because {fallback_reason} for {url}")
             while True:
                 code = self._random_code()
                 short_url = f"{base_url}/{code}"

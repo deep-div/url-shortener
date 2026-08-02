@@ -12,7 +12,8 @@ class Security:
         key = f"rate:{ip}"
         now_ms = int(time.time() * 1000)
         window_start_ms = now_ms - (WINDOW_SECONDS * 1000)
-
+        
+        ## Get everything from redis at once which we need 
         pipe = redis_client.pipeline()
         pipe.zremrangebyscore(key, 0, window_start_ms)
         pipe.zcard(key)                          # [1] count
