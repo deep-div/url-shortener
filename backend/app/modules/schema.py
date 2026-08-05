@@ -68,7 +68,6 @@ class UrlStatsResponse(BaseModel):
     by_device: dict
     by_browser: dict
     by_os: dict
-    by_referrer: dict
 
 
 class DashboardResponse(BaseModel):
