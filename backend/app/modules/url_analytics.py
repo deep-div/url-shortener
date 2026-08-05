@@ -5,7 +5,7 @@ import pytz
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType
+from app.modules.schema import AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, DeviceType, OsType
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.geoip import get_location
@@ -76,22 +76,9 @@ class UrlAnalyticsDashboard:
             by_os=await repo.get_breakdown(code, "os"),
         )
 
-    async def get_dashboard(self, db: AsyncSession) -> DashboardResponse:
-        repo = UrlRepository(db)
-        return DashboardResponse(
-            total_urls=await repo.get_total_urls(),
-            total_clicks=await repo.get_total_clicks_all(),
-            clicks_today=await repo.get_clicks_today(),
-            top_urls=[TopUrlItem(**r) for r in await repo.get_top_urls()],
-        )
-
 
 async def run_get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
     return await UrlAnalyticsDashboard().get_url_stats(code, db)
-
-
-async def run_get_dashboard(db: AsyncSession) -> DashboardResponse:
-    return await UrlAnalyticsDashboard().get_dashboard(db)
 
 
 async def run_url_analytics(code: str, request: Request) -> None:

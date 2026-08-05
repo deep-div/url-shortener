@@ -58,11 +58,6 @@ class ClicksByDayItem(BaseModel):
     clicks: int
 
 
-class TopUrlItem(BaseModel):
-    code: str
-    clicks: int
-
-
 class UrlStatsResponse(BaseModel):
     code: str
     total_clicks: int
@@ -71,9 +66,3 @@ class UrlStatsResponse(BaseModel):
     by_browser: dict
     by_os: dict
 
-
-class DashboardResponse(BaseModel):
-    total_urls: int
-    total_clicks: int
-    clicks_today: int
-    top_urls: list[TopUrlItem]

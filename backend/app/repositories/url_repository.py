@@ -91,29 +91,4 @@ class UrlRepository:
         )
         return {(r.value or "Unknown"): r.count for r in result.all()}
 
-    #  Analytics — read (dashboard / global)
-
-    async def get_total_clicks_all(self) -> int:
-        result = await self.session.execute(select(func.count(Analytics.id)))
-        return result.scalar() or 0
-
-    async def get_clicks_today(self) -> int:
-        today = datetime.datetime.now(IST).date()
-        result = await self.session.execute(
-            select(func.count(Analytics.id)).filter(cast(Analytics.clicked_at, Date) == today)
-        )
-        return result.scalar() or 0
-
-    async def get_top_urls(self, limit: int = 5) -> list[dict]:
-        result = await self.session.execute(
-            select(Analytics.code, func.count(Analytics.id).label("clicks"))
-            .group_by(Analytics.code)
-            .order_by(func.count(Analytics.id).desc())
-            .limit(limit)
-        )
-        return [{"code": r.code, "clicks": r.clicks} for r in result.all()]
-
-    async def get_total_urls(self) -> int:
-        result = await self.session.execute(select(func.count(Url.id)))
-        return result.scalar() or 0
 
