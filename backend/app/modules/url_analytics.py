@@ -4,7 +4,7 @@ import pytz
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType, ReferrerType
+from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 
@@ -33,9 +33,6 @@ class UrlAnalytics:
             raw_os = ua.os.family or ""
             os_name = OsType.from_ua(raw_os) if raw_os else None
 
-        raw_referrer = request.headers.get("referer") or request.headers.get("referrer")
-        referrer = self._parse_referrer(raw_referrer)
-
         return AnalyticsResponse(
             code=code,
             clicked_at=datetime.datetime.now(IST),
@@ -43,26 +40,7 @@ class UrlAnalytics:
             device=device,
             browser=browser,
             os=os_name,
-            referrer=referrer,
         )
-
-    def _parse_referrer(self, raw: str | None) -> ReferrerType:
-        if not raw:
-            return ReferrerType.Direct
-        raw = raw.lower()
-        if "google" in raw:
-            return ReferrerType.Google
-        if "twitter" in raw or "t.co" in raw:
-            return ReferrerType.Twitter
-        if "linkedin" in raw:
-            return ReferrerType.LinkedIn
-        if "facebook" in raw or "fb.com" in raw:
-            return ReferrerType.Facebook
-        if "instagram" in raw:
-            return ReferrerType.Instagram
-        if "youtube" in raw:
-            return ReferrerType.YouTube
-        return ReferrerType.Other
 
 
 class UrlAnalyticsDashboard:
@@ -72,12 +50,10 @@ class UrlAnalyticsDashboard:
         return UrlStatsResponse(
             code=code,
             total_clicks=await repo.get_total_clicks(code),
-            unique_clicks=await repo.get_unique_clicks(code),
             clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code)],
             by_device=await repo.get_breakdown(code, "device"),
             by_browser=await repo.get_breakdown(code, "browser"),
             by_os=await repo.get_breakdown(code, "os"),
-            by_referrer=await repo.get_breakdown(code, "referrer"),
         )
 
     async def get_dashboard(self, db: AsyncSession) -> DashboardResponse:

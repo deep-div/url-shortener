@@ -34,16 +34,6 @@ class OsType(str, Enum):
         return _map.get(raw.lower(), cls.Other)
 
 
-class ReferrerType(str, Enum):
-    Direct = "Direct"
-    Google = "Google"
-    Twitter = "Twitter"
-    LinkedIn = "LinkedIn"
-    Facebook = "Facebook"
-    Instagram = "Instagram"
-    YouTube = "YouTube"
-    Other = "Other"
-
 
 class ShortenResponse(BaseModel):
     short_url: str
@@ -57,7 +47,6 @@ class AnalyticsResponse(BaseModel):
     device: DeviceType | None
     browser: str | None
     os: OsType | None
-    referrer: ReferrerType | None
     class Config:
         from_attributes = True
 
@@ -75,7 +64,6 @@ class TopUrlItem(BaseModel):
 class UrlStatsResponse(BaseModel):
     code: str
     total_clicks: int
-    unique_clicks: int
     clicks_by_day: list[ClicksByDayItem]
     by_device: dict
     by_browser: dict

@@ -33,4 +33,3 @@ class Analytics(Base):
     device     = Column(String, nullable=True)
     browser    = Column(String, nullable=True)
     os         = Column(String, nullable=True)
-    referrer   = Column(Text, nullable=True)

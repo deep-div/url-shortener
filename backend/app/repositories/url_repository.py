@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, distinct, cast, Date
+from sqlalchemy import select, func, cast, Date
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.repositories.models import Analytics, Url
@@ -57,7 +57,6 @@ class UrlRepository:
             device=click.device,
             browser=click.browser,
             os=click.os,
-            referrer=click.referrer,
         )
         self.session.add(row)
         await self.session.commit()
@@ -70,11 +69,6 @@ class UrlRepository:
         )
         return result.scalar() or 0
 
-    async def get_unique_clicks(self, code: str) -> int:
-        result = await self.session.execute(
-            select(func.count(distinct(Analytics.ip))).filter(Analytics.code == code)
-        )
-        return result.scalar() or 0
 
     async def get_clicks_by_day(self, code: str) -> list[dict]:
         result = await self.session.execute(
