@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
+import datetime
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
@@ -39,8 +40,15 @@ async def redirect_to_url(code: str, request: Request, background_tasks: Backgro
 
 
 @router.get("/analytics/{code}", response_model=UrlStatsResponse)
-async def get_url_stats(code: str, db: AsyncSession = Depends(get_db)):
-    return await run_get_url_stats(code, db)
+async def get_url_stats(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+    from_date: datetime.date | None = Query(None, alias="from"),
+    to_date: datetime.date | None = Query(None, alias="to"),
+):
+    if from_date and not to_date:
+        to_date = from_date
+    return await run_get_url_stats(code, db, from_date, to_date)
 
 
 

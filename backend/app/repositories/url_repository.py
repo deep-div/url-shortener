@@ -65,27 +65,34 @@ class UrlRepository:
 
     #  Analytics — read (per URL)
 
-    async def get_total_clicks(self, code: str) -> int:
+    def _date_filters(self, code: str, from_date, to_date):
+        filters = [Analytics.code == code]
+        if from_date:
+            filters.append(cast(Analytics.clicked_at, Date) >= from_date)
+        if to_date:
+            filters.append(cast(Analytics.clicked_at, Date) <= to_date)
+        return filters
+
+    async def get_total_clicks(self, code: str, from_date=None, to_date=None) -> int:
         result = await self.session.execute(
-            select(func.count(Analytics.id)).filter(Analytics.code == code)
+            select(func.count(Analytics.id)).filter(*self._date_filters(code, from_date, to_date))
         )
         return result.scalar() or 0
 
-
-    async def get_clicks_by_day(self, code: str) -> list[dict]:
+    async def get_clicks_by_day(self, code: str, from_date=None, to_date=None) -> list[dict]:
         result = await self.session.execute(
             select(cast(Analytics.clicked_at, Date).label("date"), func.count(Analytics.id).label("clicks"))
-            .filter(Analytics.code == code)
+            .filter(*self._date_filters(code, from_date, to_date))
             .group_by(cast(Analytics.clicked_at, Date))
             .order_by(cast(Analytics.clicked_at, Date))
         )
         return [{"date": str(r.date), "clicks": r.clicks} for r in result.all()]
 
-    async def get_breakdown(self, code: str, field: str) -> dict:
+    async def get_breakdown(self, code: str, field: str, from_date=None, to_date=None) -> dict:
         col = getattr(Analytics, field)
         result = await self.session.execute(
             select(col.label("value"), func.count(Analytics.id).label("count"))
-            .filter(Analytics.code == code)
+            .filter(*self._date_filters(code, from_date, to_date))
             .group_by(col)
             .order_by(func.count(Analytics.id).desc())
         )

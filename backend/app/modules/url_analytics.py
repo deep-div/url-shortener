@@ -65,20 +65,20 @@ class UrlAnalytics:
 
 class UrlAnalyticsDashboard:
 
-    async def get_url_stats(self, code: str, db: AsyncSession) -> UrlStatsResponse:
+    async def get_url_stats(self, code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
         repo = UrlRepository(db)
         return UrlStatsResponse(
             code=code,
-            total_clicks=await repo.get_total_clicks(code),
-            clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code)],
-            by_device=await repo.get_breakdown(code, "device"),
-            by_browser=await repo.get_breakdown(code, "browser"),
-            by_os=await repo.get_breakdown(code, "os"),
+            total_clicks=await repo.get_total_clicks(code, from_date, to_date),
+            clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code, from_date, to_date)],
+            by_device=await repo.get_breakdown(code, "device", from_date, to_date),
+            by_browser=await repo.get_breakdown(code, "browser", from_date, to_date),
+            by_os=await repo.get_breakdown(code, "os", from_date, to_date),
         )
 
 
-async def run_get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
-    return await UrlAnalyticsDashboard().get_url_stats(code, db)
+async def run_get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
+    return await UrlAnalyticsDashboard().get_url_stats(code, db, from_date, to_date)
 
 
 async def run_url_analytics(code: str, request: Request) -> None:
