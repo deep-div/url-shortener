@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 import string
 
@@ -31,10 +32,7 @@ class UrlShortener:
         existing_code = cached_code or await redis_client.get(f"url:{url}")
         if existing_code:
             if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
-                pipe = redis_client.pipeline()
-                pipe.expire(f"url:{url}", REDIS_TTL)
-                pipe.expire(f"code:{existing_code}", REDIS_TTL)
-                await pipe.execute()
+                asyncio.create_task(_refresh_ttl(existing_code, url))
             return ShortenResponse(code=existing_code, short_url=f"{BASE_URL}/{existing_code}")
 
         # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
@@ -91,10 +89,7 @@ class UrlShortener:
         existing, ttl = await pipe.execute()
         if existing:
             if ttl != -1 and ttl < REFRESH_THRESHOLD:
-                pipe = redis_client.pipeline()
-                pipe.expire(f"code:{code}", REDIS_TTL)
-                pipe.expire(f"url:{existing}", REDIS_TTL)
-                await pipe.execute()
+                asyncio.create_task(_refresh_ttl(code, existing))  # expire runs after response sent
             return existing
 
         # cache miss — check PostgreSQL
@@ -107,6 +102,13 @@ class UrlShortener:
 
     def _random_code(self) -> str:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
+
+
+async def _refresh_ttl(code: str, url: str) -> None:
+    pipe = redis_client.pipeline()
+    pipe.expire(f"code:{code}", REDIS_TTL)
+    pipe.expire(f"url:{url}", REDIS_TTL)
+    await pipe.execute()
 
 
 async def run_url_shortener(url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
