@@ -44,6 +44,8 @@ class AnalyticsResponse(BaseModel):
     code: str
     clicked_at: datetime.datetime
     ip: str | None
+    country: str | None
+    city: str | None
     device: DeviceType | None
     browser: str | None
     os: OsType | None

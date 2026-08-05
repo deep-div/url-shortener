@@ -6,10 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import router
 from app.workers.code_pool import run_code_pool_worker
+from app.clients.geoip import init_geoip
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_geoip()
     task = asyncio.create_task(run_code_pool_worker())
     yield
     task.cancel()

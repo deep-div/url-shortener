@@ -1,4 +1,5 @@
 import datetime
+import ipaddress
 import pytz
 
 from fastapi import Request
@@ -7,15 +8,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.schema import AnalyticsResponse, UrlStatsResponse, DashboardResponse, ClicksByDayItem, TopUrlItem, DeviceType, OsType
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
+from app.clients.geoip import get_location
 
 import user_agents
 
 IST = pytz.timezone("Asia/Kolkata")
 
+
+def _is_public_ip(ip: str) -> bool:
+    try:
+        return ipaddress.ip_address(ip).is_global
+    except ValueError:
+        return False
+
+
 class UrlAnalytics:
 
     def parse_click_data(self, code: str, request: Request) -> AnalyticsResponse:
-        ip = request.client.host if request.client else None
+        ip = (
+            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or request.headers.get("x-real-ip")
+            or (request.client.host if request.client else None)
+        )
+        country, city = None, None
+        if ip and _is_public_ip(ip):
+            country, city = get_location(ip)
+
         raw_ua = request.headers.get("user-agent", "")
         device, browser, os_name = None, None, None
 
@@ -37,6 +55,8 @@ class UrlAnalytics:
             code=code,
             clicked_at=datetime.datetime.now(IST),
             ip=ip,
+            country=country,
+            city=city,
             device=device,
             browser=browser,
             os=os_name,

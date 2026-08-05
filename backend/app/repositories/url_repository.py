@@ -54,6 +54,8 @@ class UrlRepository:
             code=click.code,
             clicked_at=click.clicked_at,
             ip=click.ip,
+            country=click.country,
+            city=click.city,
             device=click.device,
             browser=click.browser,
             os=click.os,
