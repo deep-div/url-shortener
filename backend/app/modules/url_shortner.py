@@ -29,7 +29,7 @@ class UrlShortener:
 
     async def generate_short_code(self, url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
         # check Redis cache — fastest path, no DB touch
-        existing_code = cached_code or await redis_client.get(f"url:{url}")
+        existing_code = cached_code
         if existing_code:
             if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
                 asyncio.create_task(_refresh_ttl(existing_code, url))
@@ -75,10 +75,7 @@ class UrlShortener:
         return ShortenResponse(code=code, short_url=short_url)
 
     async def cache_and_return(self, row) -> ShortenResponse:
-        pipe = redis_client.pipeline()
-        pipe.set(f"url:{row.long_url}", row.code, ex=REDIS_TTL)
-        pipe.set(f"code:{row.code}", row.long_url, ex=REDIS_TTL)
-        await pipe.execute()
+        asyncio.create_task(_set_cache(row.long_url, row.code))
         return ShortenResponse(code=row.code, short_url=row.short_url)
 
     async def resolve_code(self, code: str) -> str | None:
@@ -95,13 +92,20 @@ class UrlShortener:
         # cache miss — check PostgreSQL
         row = await self.repo.get_by_code(code)
         if row:
-            await redis_client.set(f"code:{code}", row.long_url, ex=REDIS_TTL)
+            asyncio.create_task(_set_cache(row.long_url, code))
             return row.long_url
 
         return None
 
     def _random_code(self) -> str:
         return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
+
+
+async def _set_cache(url: str, code: str) -> None:
+    pipe = redis_client.pipeline()
+    pipe.set(f"url:{url}", code, ex=REDIS_TTL)
+    pipe.set(f"code:{code}", url, ex=REDIS_TTL)
+    await pipe.execute()
 
 
 async def _refresh_ttl(code: str, url: str) -> None:
