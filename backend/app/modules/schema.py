@@ -34,12 +34,12 @@ class OsType(str, Enum):
         return _map.get(raw.lower(), cls.Other)
 
 
-
 class ShortenResponse(BaseModel):
     short_url: str
     code: str
 
 
+# internal schema used by click capture pipeline
 class AnalyticsResponse(BaseModel):
     code: str
     clicked_at: datetime.datetime
@@ -49,8 +49,29 @@ class AnalyticsResponse(BaseModel):
     device: DeviceType | None
     browser: str | None
     os: OsType | None
+
     class Config:
         from_attributes = True
+
+
+# ---------------------------------------------------------------------------
+# Analytics Read Schemas for Dashboard
+# ---------------------------------------------------------------------------
+
+class LinkInfo(BaseModel):
+    code: str
+    short_url: str
+    long_url: str
+    created_at: datetime.datetime
+
+
+class SummaryInfo(BaseModel):
+    total_clicks: int
+    unique_clicks: int
+    clicks_today: int
+    clicks_this_week: int
+    avg_clicks_per_day: float
+    last_clicked_at: datetime.datetime | None
 
 
 class ClicksByDayItem(BaseModel):
@@ -58,11 +79,19 @@ class ClicksByDayItem(BaseModel):
     clicks: int
 
 
+class ClicksByHourItem(BaseModel):
+    date: str
+    hours: dict[int, int]  # hour -> clicks
+
+
 class UrlStatsResponse(BaseModel):
-    code: str
-    total_clicks: int
+    link: LinkInfo
+    summary: SummaryInfo
     clicks_by_day: list[ClicksByDayItem]
+    clicks_by_hour: list[ClicksByHourItem]
+    peak_hours: dict[int, int]  # hour -> total clicks across all days
+    by_country: dict
+    by_city: dict
     by_device: dict
     by_browser: dict
     by_os: dict
-

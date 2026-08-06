@@ -5,7 +5,8 @@ import pytz
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.schema import AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, DeviceType, OsType
+from fastapi import HTTPException
+from app.modules.schema import AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, ClicksByHourItem, LinkInfo, SummaryInfo, DeviceType, OsType
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.geoip import get_location
@@ -20,6 +21,13 @@ def _is_public_ip(ip: str) -> bool:
         return ipaddress.ip_address(ip).is_global
     except ValueError:
         return False
+
+
+def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
+    grouped: dict[str, dict[int, int]] = {}
+    for r in rows:
+        grouped.setdefault(r["date"], {})[r["hour"]] = r["clicks"]
+    return [ClicksByHourItem(date=date, hours=hours) for date, hours in sorted(grouped.items())]
 
 
 class UrlAnalytics:
@@ -67,10 +75,23 @@ class UrlAnalyticsDashboard:
 
     async def get_url_stats(self, code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
         repo = UrlRepository(db)
+        url_row = await repo.get_by_code(code)
+        if not url_row:
+            raise HTTPException(status_code=404, detail="Short code not found")
+        summary_data = await repo.get_summary(code, url_row.created_at)
         return UrlStatsResponse(
-            code=code,
-            total_clicks=await repo.get_total_clicks(code, from_date, to_date),
+            link=LinkInfo(
+                code=url_row.code,
+                short_url=url_row.short_url,
+                long_url=url_row.long_url,
+                created_at=url_row.created_at,
+            ),
+            summary=SummaryInfo(**summary_data),
             clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code, from_date, to_date)],
+            clicks_by_hour=_group_hours_by_date(await repo.get_clicks_by_hour(code, from_date, to_date)),
+            peak_hours=await repo.get_peak_hours(code, from_date, to_date),
+            by_country=await repo.get_breakdown(code, "country", from_date, to_date),
+            by_city=await repo.get_breakdown(code, "city", from_date, to_date),
             by_device=await repo.get_breakdown(code, "device", from_date, to_date),
             by_browser=await repo.get_breakdown(code, "browser", from_date, to_date),
             by_os=await repo.get_breakdown(code, "os", from_date, to_date),

@@ -1,6 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, cast, Date
+from sqlalchemy import select, func, cast, Date, case, extract
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.repositories.models import Analytics, Url
@@ -88,6 +88,52 @@ class UrlRepository:
         )
         return [{"date": str(r.date), "clicks": r.clicks} for r in result.all()]
 
+    async def get_summary(self, code: str, created_at: datetime.datetime) -> dict:
+        today = datetime.datetime.now(IST).date()
+        week_start = today - datetime.timedelta(days=today.weekday())
+        result = await self.session.execute(
+            select(
+                func.count(Analytics.id).label("total_clicks"),
+                func.count(Analytics.ip.distinct()).label("unique_clicks"),
+                func.max(Analytics.clicked_at).label("last_clicked_at"),
+                func.sum(case((cast(Analytics.clicked_at, Date) == today, 1), else_=0)).label("clicks_today"),
+                func.sum(case((cast(Analytics.clicked_at, Date) >= week_start, 1), else_=0)).label("clicks_this_week"),
+            ).filter(Analytics.code == code)
+        )
+        row = result.one()
+        days_active = max((today - created_at.date()).days, 1)
+        total = row.total_clicks or 0
+        return {
+            "total_clicks": total,
+            "unique_clicks": row.unique_clicks or 0,
+            "clicks_today": int(row.clicks_today or 0),
+            "clicks_this_week": int(row.clicks_this_week or 0),
+            "avg_clicks_per_day": round(total / days_active, 2),
+            "last_clicked_at": row.last_clicked_at,
+        }
+
+    async def get_clicks_by_hour(self, code: str, from_date=None, to_date=None) -> list[dict]:
+        result = await self.session.execute(
+            select(
+                cast(Analytics.clicked_at, Date).label("date"),
+                extract("hour", Analytics.clicked_at).label("hour"),
+                func.count(Analytics.id).label("clicks"),
+            )
+            .filter(*self._date_filters(code, from_date, to_date))
+            .group_by(cast(Analytics.clicked_at, Date), extract("hour", Analytics.clicked_at))
+            .order_by(cast(Analytics.clicked_at, Date), extract("hour", Analytics.clicked_at))
+        )
+        return [{"date": str(r.date), "hour": int(r.hour), "clicks": r.clicks} for r in result.all()]
+
+    async def get_peak_hours(self, code: str, from_date=None, to_date=None) -> dict:
+        result = await self.session.execute(
+            select(extract("hour", Analytics.clicked_at).label("hour"), func.count(Analytics.id).label("clicks"))
+            .filter(*self._date_filters(code, from_date, to_date))
+            .group_by(extract("hour", Analytics.clicked_at))
+            .order_by(extract("hour", Analytics.clicked_at))
+        )
+        return {int(r.hour): r.clicks for r in result.all()}
+
     async def get_breakdown(self, code: str, field: str, from_date=None, to_date=None) -> dict:
         col = getattr(Analytics, field)
         result = await self.session.execute(
@@ -96,6 +142,6 @@ class UrlRepository:
             .group_by(col)
             .order_by(func.count(Analytics.id).desc())
         )
-        return {(r.value or "Unknown"): r.count for r in result.all()}
+        return {(r.value or "Others"): r.count for r in result.all()}
 
 
