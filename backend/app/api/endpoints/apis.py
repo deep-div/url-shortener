@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
 from app.modules.security import _security
 from app.modules.url_shortner import run_url_shortener, run_resolve_code
-from app.modules.url_analytics import run_url_analytics, get_url_stats
+from app.modules.url_analytics import run_url_analytics, get_url_stats as fetch_url_stats
 from app.modules.schema import UrlStatsResponse
 
 router = APIRouter()
@@ -48,7 +48,7 @@ async def get_url_stats(
 ):
     if from_date and not to_date:
         to_date = from_date
-    return await get_url_stats(code, db, from_date, to_date)
+    return await fetch_url_stats(code, db, from_date, to_date)
 
 
 
