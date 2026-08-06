@@ -1,7 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { shortenUrl } from '../api/api.js';
-import UrlResult from './UrlResult.jsx';
-import UrlResultSkeleton from './UrlResultSkeleton.jsx';
 
 function ArrowIcon() {
   return (
@@ -13,9 +12,9 @@ function ArrowIcon() {
 
 export default function UrlForm() {
   const [url, setUrl] = useState('');
-  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -24,11 +23,10 @@ export default function UrlForm() {
 
     setLoading(true);
     setError(null);
-    setResult(null);
 
     try {
       const data = await shortenUrl(trimmed);
-      setResult(data);
+      navigate(`/analytics/${data.code}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,12 +67,6 @@ export default function UrlForm() {
         <div className="form-error" role="alert">
           {error}
         </div>
-      )}
-
-      {loading && <UrlResultSkeleton />}
-
-      {!loading && result && (
-        <UrlResult result={result} originalUrl={url.trim()} />
       )}
     </div>
   );
