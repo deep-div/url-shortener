@@ -15,10 +15,6 @@ class UrlRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_long_url(self, url: str) -> Url | None:
-        result = await self.session.execute(select(Url).filter(Url.long_url == url))
-        return result.scalar_one_or_none()
-
     async def get_by_code(self, code: str) -> Url | None:
         result = await self.session.execute(select(Url).filter(Url.code == code))
         return result.scalar_one_or_none()
@@ -38,16 +34,6 @@ class UrlRepository:
             raise
         row = result.scalar_one()
         return row, row.code != code
-
-    async def save(self, code: str, long_url: str, short_url: str) -> Url:
-        row = Url(code=code, long_url=long_url, short_url=short_url)
-        self.session.add(row)
-        try:
-            await self.session.commit()
-        except IntegrityError:
-            await self.session.rollback()
-            raise
-        return row
 
     async def save_analytics(self, click) -> None:
         row = Analytics(
@@ -72,12 +58,6 @@ class UrlRepository:
         if to_date:
             filters.append(cast(Analytics.clicked_at, Date) <= to_date)
         return filters
-
-    async def get_total_clicks(self, code: str, from_date=None, to_date=None) -> int:
-        result = await self.session.execute(
-            select(func.count(Analytics.id)).filter(*self._date_filters(code, from_date, to_date))
-        )
-        return result.scalar() or 0
 
     async def get_clicks_by_day(self, code: str, from_date=None, to_date=None) -> list[dict]:
         result = await self.session.execute(
