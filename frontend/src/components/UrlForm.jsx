@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { shortenUrl } from '../api/api.js';
 import UrlResult from './UrlResult.jsx';
+import UrlResultSkeleton from './UrlResultSkeleton.jsx';
 
 function ArrowIcon() {
   return (
@@ -58,12 +59,8 @@ export default function UrlForm() {
             disabled={loading || !url.trim()}
             aria-busy={loading}
           >
-            {loading ? (
-              <div className="spinner" role="status" aria-label="Shortening…" />
-            ) : (
-              <ArrowIcon />
-            )}
-            {loading ? 'Shortening…' : 'Shorten'}
+            <ArrowIcon />
+            Shorten
           </button>
         </div>
       </form>
@@ -74,7 +71,9 @@ export default function UrlForm() {
         </div>
       )}
 
-      {result && (
+      {loading && <UrlResultSkeleton />}
+
+      {!loading && result && (
         <UrlResult result={result} originalUrl={url.trim()} />
       )}
     </div>

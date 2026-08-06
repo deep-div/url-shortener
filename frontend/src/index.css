@@ -383,6 +383,27 @@ img, svg { display: block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner-lg { width: 32px; height: 32px; border-width: 3px; }
 
+/* Skeleton / Shimmer */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.skel-block {
+  background: linear-gradient(
+    90deg,
+    var(--border)    25%,
+    var(--surface-2) 50%,
+    var(--border)    75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+/* Skeleton card fades in like the real result */
+.url-result-skeleton {
+  animation: slideUp 0.22s ease forwards;
+}
+
 /* Empty State */
 .empty-state { text-align: center; padding: 48px 24px; }
 .empty-title { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
