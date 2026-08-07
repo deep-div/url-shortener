@@ -476,7 +476,7 @@ img, svg { display: block; }
 
 /* ── Dashboard Hero ── */
 .dash-hero {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
   padding: 24px 28px; margin-bottom: 28px; box-shadow: var(--shadow-sm);
   animation: fadeIn 0.3s ease forwards;
@@ -558,21 +558,18 @@ img, svg { display: block; }
   letter-spacing: -0.3px; color: var(--text);
 }
 
-/* Segmented toggle (Countries / Cities) */
+/* Plain text toggle (Countries / Cities) */
 .metric-toggle {
-  display: inline-flex; padding: 3px;
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  display: inline-flex; gap: 4px;
 }
 .metric-toggle-btn {
-  padding: 4px 12px; font-size: 12px; font-weight: 600;
-  color: var(--text-muted); border-radius: var(--radius-full);
-  transition: all var(--transition);
+  padding: 2px 6px; font-size: 12px; font-weight: 600;
+  color: var(--text-muted);
+  transition: color var(--transition);
 }
 .metric-toggle-btn:hover { color: var(--text); }
 .metric-toggle-btn.active {
-  background: var(--surface); color: var(--accent-dark);
-  box-shadow: var(--shadow-sm);
+  color: var(--accent-dark);
 }
 
 /* Ranked bar list */

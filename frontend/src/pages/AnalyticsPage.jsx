@@ -110,7 +110,6 @@ export default function AnalyticsPage() {
               </a>
             </div>
             <div className="dash-long-url">{link.long_url}</div>
-            <div className="dash-meta">Created {formatDate(link.created_at)}</div>
           </div>
           <div className="dash-hero-actions">
             <button
