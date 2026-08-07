@@ -1,20 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { shortenUrl } from '../api/api.js';
 
-function ArrowIcon() {
+function LinkIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M5 12h14M12 5l7 7-7 7" />
+    <svg
+      className="url-input-icon"
+      width="17" height="17" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </svg>
   );
 }
 
-export default function UrlForm() {
-  const [url, setUrl] = useState('');
+export default function UrlForm({ defaultUrl = '' }) {
+  const [url, setUrl] = useState(defaultUrl);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (defaultUrl) setUrl(defaultUrl);
+  }, [defaultUrl]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -39,12 +49,13 @@ export default function UrlForm() {
       <form onSubmit={handleSubmit} noValidate>
         <div className="url-form-inner">
           <div className="url-input-wrap">
+            <LinkIcon />
             <input
               className="url-input"
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com/really/long/url"
+              placeholder="Paste your long URL here..."
               required
               aria-label="URL to shorten"
               autoComplete="url"
@@ -57,8 +68,7 @@ export default function UrlForm() {
             disabled={loading || !url.trim()}
             aria-busy={loading}
           >
-            <ArrowIcon />
-            Shorten
+            {loading ? 'Shortening…' : 'Shorten →'}
           </button>
         </div>
       </form>

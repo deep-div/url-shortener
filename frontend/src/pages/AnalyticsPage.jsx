@@ -112,8 +112,36 @@ export default function AnalyticsPage() {
     return (
       <div className="analytics-page">
         <div className="container">
-          <div className="empty-state">
-            <div className="spinner spinner-lg" role="status" aria-label="Loading analytics…" style={{ margin: '0 auto' }} />
+          {/* Back link placeholder */}
+          <div className="skel-block" style={{ width: 60, height: 14, borderRadius: 6, marginBottom: 24 }} />
+
+          {/* Hero */}
+          <div className="dash-hero" style={{ marginBottom: 24 }}>
+            <div className="dash-hero-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="skel-block" style={{ width: 200, height: 20, borderRadius: 6 }} />
+              <div className="skel-block" style={{ width: '70%', height: 14, borderRadius: 6 }} />
+              <div className="skel-block" style={{ width: 120, height: 12, borderRadius: 6 }} />
+            </div>
+            <div className="skel-block" style={{ width: 100, height: 34, borderRadius: 8, alignSelf: 'center' }} />
+          </div>
+
+          {/* Stats grid */}
+          <div className="stats-row stats-row-4" style={{ marginBottom: 24 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skel-block" style={{ height: 88, borderRadius: 12 }} />
+            ))}
+          </div>
+
+          {/* Clicks chart */}
+          <div className="skel-block" style={{ height: 220, borderRadius: 12, marginBottom: 24 }} />
+
+          {/* Peak hours chart */}
+          <div className="skel-block" style={{ height: 180, borderRadius: 12, marginBottom: 24 }} />
+
+          {/* Donut row */}
+          <div className="donut-row">
+            <div className="skel-block" style={{ flex: 1, height: 220, borderRadius: 12 }} />
+            <div className="skel-block" style={{ flex: 1, height: 220, borderRadius: 12 }} />
           </div>
         </div>
       </div>
