@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import StatsCard from '../components/StatsCard.jsx';
 import ClicksChart from '../components/ClicksChart.jsx';
-import DistributionBar from '../components/DistributionBar.jsx';
 import DonutChart from '../components/DonutChart.jsx';
-import LocationChart from '../components/LocationChart.jsx';
-import PeakHoursChart from '../components/PeakHoursChart.jsx';
+import MetricBars from '../components/MetricBars.jsx';
 import { getUrlStats } from '../api/api.js';
 import { useClipboard } from '../hooks/useClipboard.js';
 
@@ -13,45 +10,6 @@ function BackIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M19 12H5M12 5l-7 7 7 7" />
-    </svg>
-  );
-}
-
-function ClickIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M15 15l-2 5L9 9l11 4-5 2z" />
-      <path d="M22 22l-5-5" />
-    </svg>
-  );
-}
-
-function UsersIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function TodayIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-}
-
-function AvgIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   );
 }
@@ -87,11 +45,6 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatTime(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
-
 export default function AnalyticsPage() {
   const { code } = useParams();
   const [data, setData] = useState(null);
@@ -112,36 +65,13 @@ export default function AnalyticsPage() {
     return (
       <div className="analytics-page">
         <div className="container">
-          {/* Back link placeholder */}
           <div className="skel-block" style={{ width: 60, height: 14, borderRadius: 6, marginBottom: 24 }} />
-
-          {/* Hero */}
-          <div className="dash-hero" style={{ marginBottom: 24 }}>
-            <div className="dash-hero-left" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div className="skel-block" style={{ width: 200, height: 20, borderRadius: 6 }} />
-              <div className="skel-block" style={{ width: '70%', height: 14, borderRadius: 6 }} />
-              <div className="skel-block" style={{ width: 120, height: 12, borderRadius: 6 }} />
-            </div>
-            <div className="skel-block" style={{ width: 100, height: 34, borderRadius: 8, alignSelf: 'center' }} />
-          </div>
-
-          {/* Stats grid */}
-          <div className="stats-row stats-row-4" style={{ marginBottom: 24 }}>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="skel-block" style={{ height: 88, borderRadius: 12 }} />
+          <div className="skel-block" style={{ height: 96, borderRadius: 18, marginBottom: 24 }} />
+          <div className="skel-block" style={{ height: 340, borderRadius: 18, marginBottom: 24 }} />
+          <div className="analytics-grid-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="skel-block" style={{ height: 360, borderRadius: 18 }} />
             ))}
-          </div>
-
-          {/* Clicks chart */}
-          <div className="skel-block" style={{ height: 220, borderRadius: 12, marginBottom: 24 }} />
-
-          {/* Peak hours chart */}
-          <div className="skel-block" style={{ height: 180, borderRadius: 12, marginBottom: 24 }} />
-
-          {/* Donut row */}
-          <div className="donut-row">
-            <div className="skel-block" style={{ flex: 1, height: 220, borderRadius: 12 }} />
-            <div className="skel-block" style={{ flex: 1, height: 220, borderRadius: 12 }} />
           </div>
         </div>
       </div>
@@ -161,7 +91,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { link, summary, clicks_by_day, peak_hours, by_device, by_browser, by_os, by_country, by_city } = data;
+  const { link, clicks_by_day, by_device, by_browser, by_country, by_city } = data;
 
   return (
     <div className="analytics-page">
@@ -170,7 +100,7 @@ export default function AnalyticsPage() {
           <BackIcon /> Back
         </Link>
 
-        {/* Link hero section */}
+        {/* Link hero — short url, long url, created date */}
         <div className="dash-hero">
           <div className="dash-hero-left">
             <div className="dash-short-url">
@@ -193,25 +123,21 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Stats grid */}
-        <div className="stats-row stats-row-4">
-          <StatsCard icon={<ClickIcon />} value={summary.total_clicks.toLocaleString()} label="Total clicks" />
-          <StatsCard icon={<UsersIcon />} value={summary.unique_clicks.toLocaleString()} label="Unique visitors" />
-          <StatsCard icon={<TodayIcon />} value={summary.clicks_today.toLocaleString()} label="Today" />
-          <StatsCard icon={<AvgIcon />} value={summary.avg_clicks_per_day.toLocaleString()} label="Avg / day" />
-        </div>
-
-        {/* Charts row */}
+        {/* Clicks over time */}
         <ClicksChart data={clicks_by_day} />
-        <PeakHoursChart data={peak_hours} />
 
-        {/* Donut charts row */}
-        <div className="donut-row">
-          <LocationChart countryData={by_country} cityData={by_city} />
-          <DonutChart title="Device" data={by_device} />
+        {/* Locations · Devices · Browsers */}
+        <div className="analytics-grid-3">
+          <MetricBars
+            tabs={[
+              { label: 'Countries', data: by_country },
+              { label: 'Cities', data: by_city },
+            ]}
+            scroll
+          />
+          <DonutChart title="Devices" data={by_device} />
+          <MetricBars title="Top Browsers" data={by_browser} scroll />
         </div>
-
-
       </div>
     </div>
   );

@@ -528,6 +528,94 @@ img, svg { display: block; }
 .donut-list-name { font-size: 13px; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
 .donut-list-count { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); font-weight: 600; }
 
+/* ── Analytics: Clicks chart title ── */
+.chart-card .chart-title { margin-bottom: 20px; }
+
+/* ── Analytics: 3-card row (Locations · Devices · Browsers) ── */
+.analytics-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  height: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease forwards;
+}
+.metric-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 18px;
+}
+.metric-card-title {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  letter-spacing: -0.3px; color: var(--text);
+}
+
+/* Segmented toggle (Countries / Cities) */
+.metric-toggle {
+  display: inline-flex; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+}
+.metric-toggle-btn {
+  padding: 4px 12px; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); border-radius: var(--radius-full);
+  transition: all var(--transition);
+}
+.metric-toggle-btn:hover { color: var(--text); }
+.metric-toggle-btn.active {
+  background: var(--surface); color: var(--accent-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Ranked bar list */
+.metric-list { display: flex; flex-direction: column; }
+.metric-list-scroll { flex: 1; overflow-y: auto; padding-right: 6px; }
+.metric-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 0;
+}
+.metric-name {
+  flex: 0 0 84px; font-size: 13px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.metric-track {
+  flex: 1; height: 6px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.metric-fill {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+  border-radius: var(--radius-full);
+  transform-origin: left;
+  animation: growBar 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.metric-value {
+  flex: 0 0 auto; min-width: 44px; text-align: right;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-muted);
+}
+.metric-empty {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text-faint);
+}
+
+/* Donut card body */
+.donut-body { flex: 1; display: flex; align-items: center; gap: 16px; }
+.donut-viz { flex: 0 0 150px; height: 150px; }
+.donut-legend2 { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.donut-leg-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.donut-leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.donut-leg-name { flex: 1; min-width: 0; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.donut-leg-val { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
 /* ── Location Tabs ── */
 .location-tabs { display: flex; gap: 0; margin-bottom: 14px; }
 .location-tab { padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--text-faint); transition: all var(--transition); background: transparent; border-bottom: 2px solid transparent; }
@@ -605,6 +693,7 @@ img, svg { display: block; }
   .donut-row { grid-template-columns: 1fr; }
   .donut-content { flex-direction: column; align-items: flex-start; }
   .donut-chart-wrap { width: 100%; }
+  .analytics-grid-3 { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
   .container { padding: 0 16px; }

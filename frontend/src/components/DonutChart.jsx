@@ -1,10 +1,10 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
-const COLORS = ['#A8D520', '#8CB418', '#6B9A0E', '#3D5200', '#C4E86B', '#9E9E9E'];
+const COLORS = ['#6366F1', '#818CF8', '#A5B4FC', '#4F46E5', '#C7D2FE', '#4338CA'];
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
-  const { name, value, percent } = payload[0].payload;
+  const { name, value } = payload[0].payload;
   return (
     <div style={{
       background: 'var(--surface)',
@@ -15,80 +15,62 @@ function CustomTooltip({ active, payload }) {
     }}>
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{name}</div>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-        {value.toLocaleString()} ({(percent * 100).toFixed(0)}%)
+        {value.toLocaleString()} clicks
       </div>
     </div>
   );
 }
 
+/**
+ * Donut chart with legend. Renders raw counts pulled from the API.
+ * @param {{ title: string, data: Record<string, number> }} props
+ */
 export default function DonutChart({ title, data }) {
-  if (!data || Object.keys(data).length === 0) return null;
-
-  const total = Object.values(data).reduce((s, v) => s + v, 0);
-  const sorted = Object.entries(data).sort((a, b) => b[1] - a[1]);
-
-  // Top 5 for the donut, rest merged into "Others"
-  const top5 = sorted.slice(0, 5);
-  const othersSum = sorted.slice(5).reduce((s, [, v]) => s + v, 0);
-  const chartData = top5.map(([name, value]) => ({ name, value, percent: value / total }));
-  if (othersSum > 0) {
-    chartData.push({ name: 'Others', value: othersSum, percent: othersSum / total });
-  }
-
-  // Full sorted list for the scrollable table
-  const allEntries = sorted.map(([name, value]) => ({ name, value }));
+  const entries = data ? Object.entries(data).sort((a, b) => b[1] - a[1]) : [];
+  const chartData = entries.map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="donut-card">
-      <div className="donut-title">{title}</div>
-      <div className="donut-content">
-        <div className="donut-chart-wrap">
-          <ResponsiveContainer width="100%" height={160}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={42}
-                outerRadius={68}
-                paddingAngle={2}
-                dataKey="value"
-                stroke="none"
-              >
-                {chartData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="donut-legend">
-          {chartData.map((item, i) => (
-            <div key={item.name} className="donut-legend-item">
-              <span className="donut-legend-dot" style={{ background: COLORS[i % COLORS.length] }} />
-              <span className="donut-legend-name">{item.name}</span>
-              <span className="donut-legend-value">{(item.percent * 100).toFixed(0)}%</span>
-            </div>
-          ))}
-        </div>
+    <div className="metric-card">
+      <div className="metric-card-head">
+        <div className="metric-card-title">{title}</div>
       </div>
 
-      {/* Full scrollable list */}
-      <div className="donut-list-wrap">
-        <div className="donut-list-header">
-          <span>{title}</span>
-          <span>Clicks</span>
+      {chartData.length === 0 ? (
+        <div className="metric-empty">No data yet</div>
+      ) : (
+        <div className="donut-body">
+          <div className="donut-viz">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={46}
+                  outerRadius={70}
+                  paddingAngle={2}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {chartData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="donut-legend2">
+            {chartData.map((item, i) => (
+              <div key={item.name} className="donut-leg-row">
+                <span className="donut-leg-dot" style={{ background: COLORS[i % COLORS.length] }} />
+                <span className="donut-leg-name">{item.name || 'Unknown'}</span>
+                <span className="donut-leg-val">{item.value.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="donut-list">
-          {allEntries.map((item) => (
-            <div key={item.name} className="donut-list-row">
-              <span className="donut-list-name">{item.name || 'Unknown'}</span>
-              <span className="donut-list-count">{item.value.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
