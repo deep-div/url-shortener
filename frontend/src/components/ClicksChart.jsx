@@ -67,7 +67,7 @@ export default function ClicksChart({ data }) {
                 <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="var(--border)" strokeDasharray="4 4" vertical={false} />
+            <CartesianGrid stroke="none" vertical={false} horizontal={false} />
             <XAxis
               dataKey="date"
               tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
