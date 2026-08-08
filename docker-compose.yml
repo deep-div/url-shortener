@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "80:4000"
+      - "443:4000"
+    env_file:
+      - backend/.env
+    restart: unless-stopped

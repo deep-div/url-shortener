@@ -1,0 +1,9 @@
+**/node_modules
+**/__pycache__
+**/.venv
+**/*.pyc
+**/.env
+**/dist
+backend/.logs
+backend/z_dumps
+backend/geoipdb
