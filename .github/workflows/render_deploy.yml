@@ -1,24 +1,41 @@
 name: Render Serverless Deployment
-  
+
 on:
   workflow_dispatch:
     inputs:
       run_complete_workflow:
         description: "Run complete workflow"
-        required: true ## input must be provided
-        default: false 
+        required: true
+        default: false
         type: boolean
 
 jobs:
   build-and-push:
     if: ${{ inputs.run_complete_workflow == true }}
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Create backend .env
+        run: |
+          cat > backend/.env << EOF
+          ENVIRONMENT=${{ vars.ENVIRONMENT }}
+          LOG_LEVEL=${{ vars.LOG_LEVEL }}
+          BASE_URL=${{ vars.BASE_URL }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_PORT=${{ secrets.DB_PORT }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          REDIS_HOST=${{ secrets.REDIS_HOST }}
+          REDIS_PORT=${{ secrets.REDIS_PORT }}
+          REDIS_KEY=${{ secrets.REDIS_KEY }}
+          EOF
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -43,6 +60,7 @@ jobs:
   deploy-render:
     if: ${{ inputs.run_complete_workflow == true }}
     runs-on: ubuntu-latest
+    environment: production
     needs: [build-and-push]
 
     steps:
