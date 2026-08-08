@@ -3,9 +3,13 @@ services:
     build:
       context: .
       dockerfile: dockerfile
+    image: url-shortner
+    container_name: url-shortner
     ports:
-      - "80:4000"
-      - "443:4000"
+      - "80:80"
+      - "443:443"
     env_file:
       - backend/.env
+    volumes:
+      - ./backend/.logs:/app/backend/.logs
     restart: unless-stopped

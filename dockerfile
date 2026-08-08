@@ -10,15 +10,18 @@ COPY frontend/ .
 RUN npm run build
 
 
-# ── Stage 2: Final image (Python 3.13 + built frontend) ──────────────────────
+# ── Stage 2: Final image ──────────────────────────────────────────────────────
 FROM python:3.13-slim
 
-# System deps
+# System deps: nginx + postgres build headers
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
     curl \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Backend ──────────────────────────────────────────────────────────────────
+# ── Backend ───────────────────────────────────────────────────────────────────
 WORKDIR /app/backend
 
 COPY backend/requirements.txt .
@@ -29,10 +32,14 @@ COPY backend/ .
 # ── Frontend static build ─────────────────────────────────────────────────────
 COPY --from=frontend-build /app/frontend/dist /app/frontend/dist
 
+# ── Nginx config ──────────────────────────────────────────────────────────────
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/sites-enabled/default
+
 # ── Startup script ────────────────────────────────────────────────────────────
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
-EXPOSE 4000
+EXPOSE 80
 
 CMD ["/start.sh"]

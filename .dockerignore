@@ -1,9 +1,41 @@
-**/node_modules
-**/__pycache__
-**/.venv
-**/*.pyc
+# ── Secrets ───────────────────────────────────────────────────────────────────
 **/.env
-**/dist
-backend/.logs
-backend/z_dumps
-backend/geoipdb
+**/.envrc
+
+# ── Python (backend) ──────────────────────────────────────────────────────────
+**/__pycache__/
+**/*.py[codz]
+**/*.so
+**/.venv
+**/venv/
+**/env/
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/*.egg-info/
+**/dist/
+**/build/
+**/.tox/
+**/.coverage
+**/htmlcov/
+**/alembic/versions
+backend/z_dumps/
+backend/.logs/
+**/*.rdb
+**/*.aof
+
+# ── Node / frontend ───────────────────────────────────────────────────────────
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/*.local
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/*.suo
+**/*.sw?

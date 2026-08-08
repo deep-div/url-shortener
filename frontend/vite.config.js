@@ -10,5 +10,10 @@ export default defineConfig({
   ],
   server: {
     port: 4000,
+    proxy: {
+      '/shorten': 'http://127.0.0.1:8000',
+      '/analytics': 'http://127.0.0.1:8000',
+      '/health': 'http://127.0.0.1:8000',
+    },
   },
 })
