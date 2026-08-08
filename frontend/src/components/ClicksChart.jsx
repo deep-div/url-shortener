@@ -140,10 +140,62 @@ function RangeDropdown({ range, onRangeChange }) {
   );
 }
 
-export default function ClicksChart({ data, range = 'all', onRangeChange }) {
-  const [chartType, setChartType] = useState('area');
+function formatHour(val) {
+  const h = Number(val);
+  if (h === 0) return '12am';
+  if (h < 12) return `${h}am`;
+  if (h === 12) return '12pm';
+  return `${h - 12}pm`;
+}
 
-  const sharedAxes = (
+function CustomHourTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', boxShadow: 'var(--shadow-md)' }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
+        {formatHour(label)}
+      </div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--accent-dark)' }}>
+        {payload[0].value.toLocaleString()} clicks
+      </div>
+    </div>
+  );
+}
+
+export default function ClicksChart({ data, peakHours, range = 'all', onRangeChange }) {
+  const [chartType, setChartType] = useState('area');
+  const [viewTab, setViewTab] = useState('days');
+
+  const hoursData = peakHours
+    ? Array.from({ length: 24 }, (_, i) => ({ hour: String(i), clicks: peakHours[String(i)] ?? 0 }))
+    : [];
+
+  const isHours = viewTab === 'hours';
+  const activeData = isHours ? hoursData : data;
+  const isEmpty = !activeData || activeData.length === 0 || (isHours && activeData.every(d => d.clicks === 0));
+
+  const sharedAxes = isHours ? (
+    <>
+      <CartesianGrid stroke="none" vertical={false} horizontal={false} />
+      <XAxis
+        dataKey="hour"
+        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        axisLine={false}
+        tickLine={false}
+        tickFormatter={formatHour}
+        interval={2}
+        padding={{ left: 12, right: 12 }}
+      />
+      <YAxis
+        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        axisLine={false}
+        tickLine={false}
+        allowDecimals={false}
+        tickFormatter={formatYAxis}
+        width={48}
+      />
+    </>
+  ) : (
     <>
       <CartesianGrid stroke="none" vertical={false} horizontal={false} />
       <XAxis
@@ -168,14 +220,34 @@ export default function ClicksChart({ data, range = 'all', onRangeChange }) {
   return (
     <div className="chart-card">
       <div className="chart-card-head">
-        <div className="chart-title">Clicks Over Time</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="chart-title">Clicks Over Time</div>
+          <div className="metric-toggle" role="tablist">
+            <button
+              role="tab"
+              aria-selected={!isHours}
+              className={`metric-toggle-btn${!isHours ? ' active' : ''}`}
+              onClick={() => setViewTab('days')}
+            >
+              Days
+            </button>
+            <button
+              role="tab"
+              aria-selected={isHours}
+              className={`metric-toggle-btn${isHours ? ' active' : ''}`}
+              onClick={() => setViewTab('hours')}
+            >
+              Hours
+            </button>
+          </div>
+        </div>
         <div className="chart-head-right">
           <ChartTypeToggle chartType={chartType} onChartTypeChange={setChartType} />
           <RangeDropdown range={range} onRangeChange={onRangeChange} />
         </div>
       </div>
 
-      {!data || data.length === 0 ? (
+      {isEmpty ? (
         <div className="empty-state">
           <div className="empty-title">No click data yet</div>
           <div className="empty-desc">Share your link to start seeing clicks here.</div>
@@ -183,21 +255,21 @@ export default function ClicksChart({ data, range = 'all', onRangeChange }) {
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           {chartType === 'bar' ? (
-            <BarChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+            <BarChart data={activeData} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
               {sharedAxes}
               <Tooltip
-                content={<CustomTooltip />}
+                content={isHours ? <CustomHourTooltip /> : <CustomTooltip />}
                 cursor={{ fill: 'var(--accent-tint)' }}
               />
               <Bar
                 dataKey="clicks"
                 fill="#6366F1"
                 radius={[4, 4, 0, 0]}
-                maxBarSize={40}
+                maxBarSize={isHours ? 24 : 40}
               />
             </BarChart>
           ) : (
-            <AreaChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+            <AreaChart data={activeData} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
               <defs>
                 <linearGradient id="clicksGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366F1" stopOpacity={0.22} />
@@ -206,7 +278,7 @@ export default function ClicksChart({ data, range = 'all', onRangeChange }) {
               </defs>
               {sharedAxes}
               <Tooltip
-                content={<CustomTooltip />}
+                content={isHours ? <CustomHourTooltip /> : <CustomTooltip />}
                 cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '4 4' }}
               />
               <Area

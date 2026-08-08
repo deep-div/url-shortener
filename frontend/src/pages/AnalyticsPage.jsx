@@ -103,7 +103,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { link, summary, clicks_by_day, by_device, by_browser, by_country, by_city } = data;
+  const { link, summary, clicks_by_day, peak_hours, by_device, by_browser, by_country, by_city } = data;
 
   return (
     <div className="analytics-page">
@@ -138,7 +138,7 @@ export default function AnalyticsPage() {
         <StatsSummaryBar summary={summary} />
 
         {/* Clicks over time */}
-        <ClicksChart data={clicks_by_day} range={range} onRangeChange={setRange} />
+        <ClicksChart data={clicks_by_day} peakHours={peak_hours} range={range} onRangeChange={setRange} />
 
         {/* Locations · Devices · Browsers */}
         <div className="analytics-grid-3">
