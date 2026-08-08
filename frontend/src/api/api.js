@@ -1,10 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? '';
-
 export async function shortenUrl(url) {
   const formData = new FormData();
   formData.append('url', url);
 
-  const res = await fetch(`${BASE_URL}/v1/shorten`, {
+  const res = await fetch('/v1/shorten', {
     method: 'POST',
     body: formData,
   });
@@ -22,7 +20,7 @@ export async function getUrlStats(code, { from, to } = {}) {
   if (from) params.set('from', from);
   if (to) params.set('to', to);
   const query = params.toString() ? `?${params}` : '';
-  const res = await fetch(`${BASE_URL}/v1/analytics/${code}${query}`);
+  const res = await fetch(`/v1/analytics/${code}${query}`);
   if (!res.ok) throw new Error(`No analytics found for /${code}`);
   return res.json();
 }
