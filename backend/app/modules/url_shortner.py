@@ -27,9 +27,13 @@ class UrlShortener:
     def __init__(self, session: AsyncSession):
         self.repo = UrlRepository(session)
 
-    async def generate_short_code(self, url: str, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
-        # check Redis cache — fastest path, no DB touch
-        existing_code = cached_code
+    async def generate_short_code(self, url: str) -> ShortenResponse:
+        pipe = redis_client.pipeline()
+        pipe.get(f"url:{url}")
+        pipe.ttl(f"url:{url}")
+        results = await pipe.execute()
+        existing_code, cached_ttl = results[0], results[1]
+
         if existing_code:
             if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
                 asyncio.create_task(_refresh_ttl(existing_code, url))
@@ -115,9 +119,9 @@ async def _refresh_ttl(code: str, url: str) -> None:
     await pipe.execute()
 
 
-async def run_url_shortener(url: str, session: AsyncSession, cached_code: str | None = None, cached_ttl: int = -1) -> ShortenResponse:
+async def run_url_shortener(url: str, session: AsyncSession) -> ShortenResponse:
     shortener = UrlShortener(session)
-    return await shortener.generate_short_code(url, cached_code, cached_ttl)
+    return await shortener.generate_short_code(url)
 
 
 async def run_resolve_code(code: str, session: AsyncSession) -> str | None:
