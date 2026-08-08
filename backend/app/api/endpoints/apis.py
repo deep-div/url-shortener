@@ -12,7 +12,7 @@ from app.api.endpoints.utils import _extract_code
 router = APIRouter()
 
 
-@router.post("/shorten")
+@router.post("/v1/shorten")
 async def shorten_url(request: Request, db: AsyncSession = Depends(get_db), url: str = Form(...)):
     ip = request.client.host if request.client else "unknown"
 
@@ -40,7 +40,7 @@ async def redirect_to_url(code: str, request: Request, background_tasks: Backgro
     return RedirectResponse(url=long_url, status_code=302)
 
 
-@router.get("/analytics/{code}", response_model=UrlStatsResponse)
+@router.get("/v1/analytics/{code}", response_model=UrlStatsResponse)
 async def get_url_stats(
     code: str,
     db: AsyncSession = Depends(get_db),
