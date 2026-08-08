@@ -348,6 +348,22 @@ img, svg { display: block; }
 .range-dropdown-item:hover { background: var(--surface-2); color: var(--text); }
 .range-dropdown-item.active { color: var(--accent); font-weight: 600; }
 
+.chart-type-toggle {
+  display: flex; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 999px; padding: 4px; gap: 2px;
+}
+.chart-type-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border: none; background: transparent; border-radius: 999px;
+  color: var(--text-muted); cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.chart-type-btn:hover { color: var(--text); }
+.chart-type-btn.active { background: var(--accent-tint); color: var(--accent); }
+.chart-head-right { display: flex; align-items: center; gap: 10px; }
+
 /* ── Analytics: 3-card row (Locations · Devices · Browsers) ── */
 .analytics-grid-3 {
   display: grid;

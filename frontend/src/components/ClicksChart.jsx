@@ -1,12 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  AreaChart, Area,
+  BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
 function formatDay(val) {
@@ -54,6 +50,46 @@ const RANGES = [
   { label: 'Last 90 days', value: '90d' },
   { label: 'All time',     value: 'all' },
 ];
+
+function AreaIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="3 17 9 9 14 13 21 4" />
+      <polyline points="15 4 21 4 21 10" />
+    </svg>
+  );
+}
+
+function BarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="3" y="12" width="4" height="9" rx="1" />
+      <rect x="10" y="7" width="4" height="14" rx="1" />
+      <rect x="17" y="3" width="4" height="18" rx="1" />
+    </svg>
+  );
+}
+
+function ChartTypeToggle({ chartType, onChartTypeChange }) {
+  return (
+    <div className="chart-type-toggle">
+      <button
+        className={`chart-type-btn${chartType === 'area' ? ' active' : ''}`}
+        onClick={() => onChartTypeChange('area')}
+        title="Line chart"
+      >
+        <AreaIcon />
+      </button>
+      <button
+        className={`chart-type-btn${chartType === 'bar' ? ' active' : ''}`}
+        onClick={() => onChartTypeChange('bar')}
+        title="Bar chart"
+      >
+        <BarIcon />
+      </button>
+    </div>
+  );
+}
 
 function ChevronIcon({ open }) {
   return (
@@ -105,11 +141,38 @@ function RangeDropdown({ range, onRangeChange }) {
 }
 
 export default function ClicksChart({ data, range = 'all', onRangeChange }) {
+  const [chartType, setChartType] = useState('area');
+
+  const sharedAxes = (
+    <>
+      <CartesianGrid stroke="none" vertical={false} horizontal={false} />
+      <XAxis
+        dataKey="date"
+        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        axisLine={false}
+        tickLine={false}
+        tickFormatter={formatDay}
+        padding={{ left: 12, right: 12 }}
+      />
+      <YAxis
+        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        axisLine={false}
+        tickLine={false}
+        allowDecimals={false}
+        tickFormatter={formatYAxis}
+        width={48}
+      />
+    </>
+  );
+
   return (
     <div className="chart-card">
       <div className="chart-card-head">
         <div className="chart-title">Clicks Over Time</div>
-        <RangeDropdown range={range} onRangeChange={onRangeChange} />
+        <div className="chart-head-right">
+          <ChartTypeToggle chartType={chartType} onChartTypeChange={setChartType} />
+          <RangeDropdown range={range} onRangeChange={onRangeChange} />
+        </div>
       </div>
 
       {!data || data.length === 0 ? (
@@ -119,44 +182,44 @@ export default function ClicksChart({ data, range = 'all', onRangeChange }) {
         </div>
       ) : (
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
-            <defs>
-              <linearGradient id="clicksGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#6366F1" stopOpacity={0.22} />
-                <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid stroke="none" vertical={false} horizontal={false} />
-            <XAxis
-              dataKey="date"
-              tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={formatDay}
-              padding={{ left: 12, right: 12 }}
-            />
-            <YAxis
-              tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              allowDecimals={false}
-              tickFormatter={formatYAxis}
-              width={48}
-            />
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '4 4' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="clicks"
-              stroke="#6366F1"
-              strokeWidth={2.5}
-              fill="url(#clicksGrad)"
-              dot={{ r: 4, fill: '#6366F1', stroke: '#fff', strokeWidth: 2 }}
-              activeDot={{ r: 6, fill: '#4F46E5', stroke: '#fff', strokeWidth: 2 }}
-            />
-          </AreaChart>
+          {chartType === 'bar' ? (
+            <BarChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+              {sharedAxes}
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'var(--accent-tint)' }}
+              />
+              <Bar
+                dataKey="clicks"
+                fill="#6366F1"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              />
+            </BarChart>
+          ) : (
+            <AreaChart data={data} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+              <defs>
+                <linearGradient id="clicksGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.22} />
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              {sharedAxes}
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ stroke: '#6366F1', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="clicks"
+                stroke="#6366F1"
+                strokeWidth={2.5}
+                fill="url(#clicksGrad)"
+                dot={{ r: 4, fill: '#6366F1', stroke: '#fff', strokeWidth: 2 }}
+                activeDot={{ r: 6, fill: '#4F46E5', stroke: '#fff', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          )}
         </ResponsiveContainer>
       )}
     </div>
