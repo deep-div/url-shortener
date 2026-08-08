@@ -71,6 +71,8 @@ class SummaryInfo(BaseModel):
     clicks_today: int
     clicks_this_week: int
     avg_clicks_per_day: float
+    total_countries: int
+    total_cities: int
     last_clicked_at: datetime.datetime | None
 
 

@@ -17,8 +17,12 @@ export async function shortenUrl(url) {
   return res.json();
 }
 
-export async function getUrlStats(code) {
-  const res = await fetch(`${BASE_URL}/analytics/${code}`);
+export async function getUrlStats(code, { from, to } = {}) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const query = params.toString() ? `?${params}` : '';
+  const res = await fetch(`${BASE_URL}/analytics/${code}${query}`);
   if (!res.ok) throw new Error(`No analytics found for /${code}`);
   return res.json();
 }

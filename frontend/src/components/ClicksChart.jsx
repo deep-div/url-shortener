@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -34,24 +35,82 @@ function CustomTooltip({ active, payload, label }) {
         boxShadow: 'var(--shadow-md)',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
         {formatDay(label)}
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 15, fontWeight: 600, color: 'var(--accent-dark)' }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--accent-dark)' }}>
         {payload[0].value.toLocaleString()} clicks
       </div>
     </div>
   );
 }
 
-/**
- * Clicks over time — smooth area/line chart.
- * @param {{ data: Array<{ date: string, clicks: number }> }} props
- */
-export default function ClicksChart({ data }) {
+const RANGES = [
+  { label: 'Today',        value: 'today' },
+  { label: 'Yesterday',    value: 'yesterday' },
+  { label: 'Last 7 days',  value: '7d' },
+  { label: 'Last 14 days', value: '14d' },
+  { label: 'Last 30 days', value: '30d' },
+  { label: 'Last 90 days', value: '90d' },
+  { label: 'All time',     value: 'all' },
+];
+
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" strokeWidth="2.5"
+      strokeLinecap="round" strokeLinejoin="round"
+      style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function RangeDropdown({ range, onRangeChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const selected = RANGES.find((r) => r.value === range) ?? RANGES[RANGES.length - 1];
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  return (
+    <div className="range-dropdown" ref={ref}>
+      <button className="range-dropdown-btn" onClick={() => setOpen((o) => !o)}>
+        {selected.label}
+        <ChevronIcon open={open} />
+      </button>
+      {open && (
+        <div className="range-dropdown-menu">
+          {RANGES.map((r) => (
+            <button
+              key={r.value}
+              className={`range-dropdown-item${r.value === range ? ' active' : ''}`}
+              onClick={() => { onRangeChange?.(r.value); setOpen(false); }}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ClicksChart({ data, range = 'all', onRangeChange }) {
   return (
     <div className="chart-card">
-      <div className="chart-title">Clicks Over Time</div>
+      <div className="chart-card-head">
+        <div className="chart-title">Clicks Over Time</div>
+        <RangeDropdown range={range} onRangeChange={onRangeChange} />
+      </div>
 
       {!data || data.length === 0 ? (
         <div className="empty-state">

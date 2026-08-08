@@ -77,6 +77,10 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
     if not url_row:
         raise HTTPException(status_code=404, detail="Short code not found")
     summary_data = await repo.get_summary(code, url_row.created_at)
+    by_country = await repo.get_breakdown(code, "country", from_date, to_date)
+    by_city = await repo.get_breakdown(code, "city", from_date, to_date)
+    summary_data["total_countries"] = len(by_country)
+    summary_data["total_cities"] = len(by_city)
     return UrlStatsResponse(
         link=LinkInfo(
             code=url_row.code,
@@ -88,8 +92,8 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
         clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code, from_date, to_date)],
         clicks_by_hour=_group_hours_by_date(await repo.get_clicks_by_hour(code, from_date, to_date)),
         peak_hours=await repo.get_peak_hours(code, from_date, to_date),
-        by_country=await repo.get_breakdown(code, "country", from_date, to_date),
-        by_city=await repo.get_breakdown(code, "city", from_date, to_date),
+        by_country=by_country,
+        by_city=by_city,
         by_device=await repo.get_breakdown(code, "device", from_date, to_date),
         by_browser=await repo.get_breakdown(code, "browser", from_date, to_date),
         by_os=await repo.get_breakdown(code, "os", from_date, to_date),

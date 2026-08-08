@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import ClicksChart from '../components/ClicksChart.jsx';
 import DonutChart from '../components/DonutChart.jsx';
 import MetricBars from '../components/MetricBars.jsx';
+import StatsSummaryBar from '../components/StatsSummaryBar.jsx';
 import { getUrlStats } from '../api/api.js';
 import { useClipboard } from '../hooks/useClipboard.js';
 
@@ -41,21 +42,35 @@ function ExternalLinkIcon() {
   );
 }
 
+function getRangeDates(value) {
+  const today = new Date();
+  const fmt = (d) => d.toISOString().split('T')[0];
+  const ago = (n) => { const d = new Date(today); d.setDate(d.getDate() - n); return d; };
+  if (value === 'today')     return { from: fmt(today),    to: fmt(today) };
+  if (value === 'yesterday') return { from: fmt(ago(1)),   to: fmt(ago(1)) };
+  if (value === '7d')        return { from: fmt(ago(6)),   to: fmt(today) };
+  if (value === '14d')       return { from: fmt(ago(13)),  to: fmt(today) };
+  if (value === '30d')       return { from: fmt(ago(29)),  to: fmt(today) };
+  if (value === '90d')       return { from: fmt(ago(89)),  to: fmt(today) };
+  return {};
+}
+
 export default function AnalyticsPage() {
   const { code } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [range, setRange] = useState('all');
   const { copied, copy } = useClipboard();
 
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getUrlStats(code)
+    getUrlStats(code, getRangeDates(range))
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, range]);
 
   if (loading) {
     return (
@@ -63,6 +78,7 @@ export default function AnalyticsPage() {
         <div className="container">
           <div className="skel-block" style={{ width: 60, height: 14, borderRadius: 6, marginBottom: 24 }} />
           <div className="skel-block" style={{ height: 96, borderRadius: 18, marginBottom: 24 }} />
+          <div className="skel-block" style={{ height: 88, borderRadius: 18, marginBottom: 24 }} />
           <div className="skel-block" style={{ height: 340, borderRadius: 18, marginBottom: 24 }} />
           <div className="analytics-grid-3">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -87,7 +103,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  const { link, clicks_by_day, by_device, by_browser, by_country, by_city } = data;
+  const { link, summary, clicks_by_day, by_device, by_browser, by_country, by_city } = data;
 
   return (
     <div className="analytics-page">
@@ -118,8 +134,11 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Stats summary */}
+        <StatsSummaryBar summary={summary} />
+
         {/* Clicks over time */}
-        <ClicksChart data={clicks_by_day} />
+        <ClicksChart data={clicks_by_day} range={range} onRangeChange={setRange} />
 
         {/* Locations · Devices · Browsers */}
         <div className="analytics-grid-3">
