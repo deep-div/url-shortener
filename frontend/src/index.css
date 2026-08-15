@@ -120,6 +120,7 @@ img, svg { display: block; }
 }
 .track-inline-input {
   width: 320px;
+  max-width: calc(100vw - 210px);
   padding: 7px 12px;
   border: 1.5px solid var(--accent);
   border-radius: var(--radius-full);
@@ -263,6 +264,8 @@ img, svg { display: block; }
   text-align: center;
   font-size: 13px;
   color: var(--text-faint);
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .hero-try-label {
   color: var(--text-muted);
@@ -281,6 +284,8 @@ img, svg { display: block; }
   border: none;
   transition: color var(--transition);
   cursor: pointer;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .hero-try-btn:hover {
   color: var(--accent);
@@ -416,6 +421,7 @@ img, svg { display: block; }
 }
 @media (max-width: 600px) {
   .stat-summary-bar { grid-template-columns: repeat(2, 1fr); }
+  .stat-summary-bar > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* ── Analytics: Clicks chart title ── */
@@ -583,7 +589,10 @@ img, svg { display: block; }
   .hero { padding: 44px 0 28px; }
   .hero-title { letter-spacing: -1.5px; font-size: clamp(34px, 9vw, 60px); margin-bottom: 28px; }
   .url-form-inner { flex-direction: column; gap: 8px; padding: 12px; }
+  .url-input-wrap { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
   .url-form-btn { justify-content: center; width: 100%; border-radius: var(--radius-md); }
+  .chart-card-head { flex-wrap: wrap; row-gap: 10px; }
+  .chart-type-btn { width: 36px; height: 36px; }
   .hero-bottom-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .hero-stat-item { justify-content: flex-start; padding: 16px 18px; }
   .hero-stat-icon { width: 40px; height: 40px; border-radius: 10px; }
@@ -606,6 +615,10 @@ img, svg { display: block; }
   .hero { padding: 36px 0 24px; }
   .hero-title { margin-bottom: 24px; }
   .hero-examples { gap: 6px; }
+  .hero-try-label { display: block; margin-right: 0; margin-bottom: 6px; }
+  .hero-try-dot { display: none; }
+  .hero-try { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .track-inline-go { padding: 7px 12px; font-size: 13px; }
   .hero-bottom-stats { grid-template-columns: 1fr; }
   .hero-stat-item { gap: 12px; }
   .dash-hero { padding: 14px 16px; gap: 12px; }
