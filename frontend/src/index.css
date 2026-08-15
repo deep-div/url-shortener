@@ -257,6 +257,35 @@ img, svg { display: block; }
   border-color: var(--accent); color: var(--accent); background: var(--accent-tint);
 }
 
+/* ── Hero try one-liner ── */
+.hero-try {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.hero-try-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-right: 16px;
+}
+.hero-try-dot {
+  margin: 0 8px;
+  color: var(--border-2);
+}
+.hero-try-btn {
+  color: var(--text-faint);
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  transition: color var(--transition);
+  cursor: pointer;
+}
+.hero-try-btn:hover {
+  color: var(--accent);
+}
+
 /* ── Hero Bottom Stats ── */
 .hero-bottom-stats {
   display: grid; grid-template-columns: repeat(4, 1fr);

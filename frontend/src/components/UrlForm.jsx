@@ -1,6 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { shortenUrl } from '../api/api.js';
+
+const PLACEHOLDER_URLS = [
+  'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://en.wikipedia.org/wiki/Artificial_intelligence',
+  'https://docs.github.com/en/actions/writing-workflows',
+  'https://www.reddit.com/r/programming/comments/xyz',
+  'https://www.notion.so/team/project-roadmap-2026',
+  'https://medium.com/@user/how-to-build-a-saas-product',
+];
+
+function useTypingPlaceholder(urls, active) {
+  const [placeholder, setPlaceholder] = useState('');
+  const indexRef = useRef(0);
+  const charRef = useRef(0);
+  const deletingRef = useRef(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (!active) { setPlaceholder('Paste your long URL here...'); return; }
+
+    function tick() {
+      const current = urls[indexRef.current];
+      if (!deletingRef.current) {
+        charRef.current += 1;
+        setPlaceholder(current.slice(0, charRef.current));
+        if (charRef.current === current.length) {
+          timerRef.current = setTimeout(() => { deletingRef.current = true; tick(); }, 1800);
+          return;
+        }
+        timerRef.current = setTimeout(tick, 38);
+      } else {
+        charRef.current -= 2;
+        if (charRef.current <= 0) {
+          charRef.current = 0;
+          deletingRef.current = false;
+          indexRef.current = (indexRef.current + 1) % urls.length;
+        }
+        setPlaceholder(current.slice(0, charRef.current));
+        timerRef.current = setTimeout(tick, 18);
+      }
+    }
+
+    timerRef.current = setTimeout(tick, 600);
+    return () => clearTimeout(timerRef.current);
+  }, [active]);
+
+  return placeholder;
+}
 
 function LinkIcon() {
   return (
@@ -21,6 +69,7 @@ export default function UrlForm({ defaultUrl = '' }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const animatedPlaceholder = useTypingPlaceholder(PLACEHOLDER_URLS, !url);
 
   useEffect(() => {
     if (defaultUrl) setUrl(defaultUrl);
@@ -55,7 +104,7 @@ export default function UrlForm({ defaultUrl = '' }) {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="Paste your long URL here..."
+              placeholder={animatedPlaceholder}
               required
               aria-label="URL to shorten"
               autoComplete="url"
