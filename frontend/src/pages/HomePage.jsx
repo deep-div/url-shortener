@@ -40,9 +40,9 @@ function WorldIcon() {
 }
 
 const EXAMPLES = [
-  { label: 'youtube.com/watch?v=dQw4...', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
-  { label: 'github.com/openai/openai-py...', url: 'https://github.com/openai/openai-python' },
-  { label: 'amazon.in/dp/B09X7CR...', url: 'https://www.amazon.in/dp/B09X7CRKRZ' },
+  { label: 'google.com/maps/place...', url: 'https://www.google.com/maps/place/Eiffel+Tower/@48.8583701,2.2944813,17z/data=!3m1!4b1!4m6!3m5!1s0x47e66e2964e34e2d:0x8ddca9ee380ef7e0!8m2!3d48.8583701!4d2.2944813!16zL20vMDJqODE' },
+  { label: 'en.wikipedia.org/wiki/Art...', url: 'https://en.wikipedia.org/wiki/Artificial_intelligence#History_of_artificial_intelligence_and_the_concept_of_intelligent_machines' },
+  { label: 'openai.com/index/advancing...', url: 'https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/' },
 ];
 
 export default function HomePage() {

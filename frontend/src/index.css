@@ -93,6 +93,66 @@ img, svg { display: block; }
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
+
+/* ── Navbar: Track trigger ── */
+.track-wrapper {
+  position: relative;
+}
+.track-trigger {
+  display: flex; align-items: center; gap: 7px;
+  padding: 7px 14px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-full);
+  color: var(--accent);
+  font-size: 13.5px; font-weight: 600;
+  background: transparent;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.track-trigger:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Track inline expand ── */
+.track-inline {
+  display: flex; align-items: center; gap: 6px;
+}
+.track-inline-input {
+  width: 320px;
+  padding: 7px 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color var(--transition), width var(--transition);
+}
+.track-inline-input:focus,
+.track-inline-input:focus-visible {
+  border-color: var(--accent-dark);
+  border-radius: var(--radius-full);
+  outline: none;
+}
+.track-inline-go {
+  padding: 7px 16px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-full);
+  font-size: 13.5px; font-weight: 600;
+  transition: background var(--transition), opacity var(--transition);
+  white-space: nowrap;
+}
+.track-inline-go:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+.track-inline-go:disabled {
+  opacity: 0.45; cursor: default;
+}
+
 /* ── Home layout ── */
 .home-main {
   display: flex;
