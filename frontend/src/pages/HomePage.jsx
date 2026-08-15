@@ -62,19 +62,20 @@ export default function HomePage() {
 
           <UrlForm defaultUrl={prefillUrl} />
 
-          <div className="hero-try">
-            <span className="hero-try-label">Examples</span>
-            {EXAMPLES.map((ex, i) => (
-              <span key={ex.url}>
-                {i > 0 && <span className="hero-try-dot">·</span>}
-                <button
-                  className="hero-try-btn"
-                  onClick={() => setPrefillUrl(ex.url)}
-                  type="button"
-                >
-                  {ex.label}
-                </button>
-              </span>
+          <div className="hero-pills">
+            {EXAMPLES.map((ex) => (
+              <button
+                key={ex.url}
+                className="hero-pill"
+                onClick={() => setPrefillUrl(ex.url)}
+                type="button"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+                {ex.label}
+              </button>
             ))}
           </div>
 
