@@ -544,6 +544,35 @@ img, svg { display: block; }
   flex-shrink: 0;
 }
 
+/* ── Error Page ── */
+.error-page {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  padding: 64px 24px;
+  animation: fadeIn 0.3s ease forwards;
+}
+.error-page-icon {
+  width: 72px; height: 72px; border-radius: 20px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+.error-page-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 800;
+  letter-spacing: -0.5px; color: var(--text); margin-bottom: 28px;
+}
+.error-page-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 24px;
+  background: var(--accent); color: #fff;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  transition: background var(--transition), transform var(--transition);
+}
+.error-page-btn:hover { background: var(--accent-dark); transform: translateY(-1px); }
+
 /* ── Empty State ── */
 .empty-state { text-align: center; padding: 48px 24px; }
 .empty-title { font-size: 15px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }

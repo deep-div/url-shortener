@@ -90,13 +90,37 @@ export default function AnalyticsPage() {
   }
 
   if (error) {
+    const isNotFound = error.startsWith('No analytics found');
     return (
       <div className="analytics-page">
         <div className="container">
           <Link to="/" className="analytics-back">
             <BackIcon /> Back
           </Link>
-          <div className="form-error" role="alert">{error}</div>
+          <div className="error-page">
+            <div className="error-page-icon">
+              {isNotFound ? (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="11" y1="8" x2="11" y2="11" />
+                  <line x1="11" y1="14" x2="11.01" y2="14" />
+                </svg>
+              ) : (
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+              )}
+            </div>
+            <div className="error-page-title">
+              {isNotFound ? 'Link not found' : 'Something went wrong'}
+            </div>
+            <Link to="/" className="error-page-btn">
+              Shorten a new link
+            </Link>
+          </div>
         </div>
       </div>
     );
