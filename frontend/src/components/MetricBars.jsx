@@ -52,7 +52,7 @@ export default function MetricBars({ title, data, tabs, scroll = false }) {
         ) : (
           entries.map(([name, value]) => (
             <div key={name} className="metric-row">
-              <span className="metric-name" data-tooltip={name || 'Unknown'}>{name || 'Unknown'}</span>
+              <span className="metric-name">{name || 'Unknown'}</span>
               <span className="metric-track">
                 <span
                   className="metric-fill"
