@@ -76,7 +76,10 @@ export default function StatsSummaryBar({ summary }) {
   return (
     <div className="stat-summary-bar">
       {stats.map((s) => (
-        <div key={s.label} className="stat-summary-item">
+        <div
+          key={s.label}
+          className={`stat-summary-item${s.label === 'Last Clicked' ? ' stat-summary-item--last-clicked' : ''}`}
+        >
           <div className="stat-summary-icon">{s.icon}</div>
           <div className="stat-summary-text">
             <div className="stat-summary-label">{s.label}</div>

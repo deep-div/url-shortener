@@ -372,6 +372,16 @@ img, svg { display: block; }
   font-size: 11px; color: var(--text-faint); margin-top: 3px; white-space: nowrap;
 }
 
+.stat-summary-item--last-clicked .stat-summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.stat-summary-item--last-clicked .stat-summary-sub {
+  font-size: 10px;
+}
+
 @media (max-width: 1024px) {
   .stat-summary-bar { grid-template-columns: repeat(3, 1fr); }
 }
