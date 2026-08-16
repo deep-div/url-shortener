@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Loading...</title>
+    </head>
+    <body>
+        <script>
+            (function () {
+                var longUrl = "{{long_url}}";
+                var code = "{{code}}";
+                fetch("https://api.ipify.org?format=json")
+                    .then(function(r) { return r.json(); })
+                    .catch(function() { return {ip: ""}; })
+                    .then(function(data) {
+                        var ipv4 = data.ip || "";
+                        fetch("/v1/record/" + code + "?ipv4=" + encodeURIComponent(ipv4));
+                    });
+                window.location.replace(longUrl);
+            })();
+        </script>
+    </body>
+</html>

@@ -38,7 +38,7 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     ipv4 = request.query_params.get("ipv4", "").strip()
     if ipv4 and _is_public_ip(ipv4):
         ip = ipv4
-    else:
+    else:  # get ipv6 if ipv4 does not comes with request 
         raw_ip = (
             request.headers.get("x-forwarded-for", "").split(",")[0].strip()
             or request.headers.get("x-real-ip")

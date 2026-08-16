@@ -1,0 +1,7 @@
+1. Browser hits /{code}
+2. Backend looks up long_url from Redis/PostgreSQL
+3. If not found → 404
+4. If found → returns redirect.html with long_url and code injected
+5. Browser renders HTML → window.location.replace(long_url) fires instantly → user redirected
+6. In parallel (doesn't block redirect) → JS fetches IPv4 from ipify → calls /v1/record/{code}?ipv4=...
+7. /v1/record/ fires run_url_analytics as background task → saves to DB with IPv4 (or IPv6 fallback)
