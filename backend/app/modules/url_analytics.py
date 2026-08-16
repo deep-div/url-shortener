@@ -45,16 +45,22 @@ def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
 
 
 def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
-    raw_ip = (
-        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        or request.headers.get("x-real-ip")
-        or (request.client.host if request.client else None)
-    )
-    ip = _normalize_ip(raw_ip) if raw_ip else raw_ip
-    if ip != raw_ip:
-        logger.info(f"Click captured from IP: IPv6={raw_ip} IPv4={ip}")
+    ipv4 = request.query_params.get("ipv4", "").strip()
+    ipv6 = request.query_params.get("ipv6", "").strip()
+
+    if ipv4 and _is_public_ip(ipv4):
+        ip = ipv4
+    elif ipv6 and _is_public_ip(ipv6):
+        ip = ipv6
     else:
-        logger.info(f"Click captured from IP: {ip}")
+        raw_ip = (
+            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or request.headers.get("x-real-ip")
+            or (request.client.host if request.client else None)
+        )
+        ip = _normalize_ip(raw_ip) if raw_ip else raw_ip
+
+    logger.info(f"Click captured from IP: {ip} (ipv4={ipv4 or 'none'}, ipv6={ipv6 or 'none'})")
     country, city = None, None
     if ip and _is_public_ip(ip):
         country, city = get_location(ip)
