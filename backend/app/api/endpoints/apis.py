@@ -1,5 +1,6 @@
 import datetime
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
 from app.modules.security import validate_url
@@ -19,6 +20,37 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
     return await run_url_shortener(url, db)
+
+
+@router.get("/{code}")
+async def redirect_to_url(code: str, db: AsyncSession = Depends(get_db)):
+    long_url = await run_resolve_code(code, db)
+    if not long_url:
+        raise HTTPException(status_code=404, detail="Short code not found")
+
+    html = f"""<!doctype html>
+<html>
+<head><title>Redirecting...</title></head>
+<body>
+<script>
+(function () {{
+  var code = {code!r};
+  fetch("https://api.ipify.org?format=json")
+    .catch(function() {{ return {{ip: ""}}; }})
+    .then(function(r) {{ return r.json ? r.json() : r; }})
+    .then(function(data) {{
+      var ipv4 = data.ip || "";
+      return fetch("/v1/resolve/" + code + "?ipv4=" + encodeURIComponent(ipv4));
+    }})
+    .then(function(r) {{ return r.json(); }})
+    .then(function(data) {{ window.location.replace(data.long_url); }})
+    .catch(function() {{ window.location.replace({long_url!r}); }});
+}})();
+</script>
+</body>
+</html>"""
+
+    return HTMLResponse(content=html)
 
 
 @router.get("/v1/resolve/{code}")
