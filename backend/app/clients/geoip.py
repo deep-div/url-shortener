@@ -1,5 +1,6 @@
 import atexit
 import os
+import unicodedata
 import httpx
 from app.core.logging import logger
 
@@ -33,13 +34,19 @@ def _geoip_lookup(ip: str) -> tuple[str | None, str | None]:
         return None, None
 
 
+def _ascii_name(name: str | None) -> str | None:
+    if not name:
+        return name
+    return unicodedata.normalize("NFD", name).encode("ascii", "ignore").decode("ascii") or name
+
+
 async def get_location(ip: str) -> tuple[str | None, str | None, str]:
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             response = await client.get(f"http://ip-api.com/json/{ip}?fields=status,country,city")
             data = response.json()
             if data.get("status") == "success":
-                return data.get("country"), data.get("city"), "ip-api.com"
+                return data.get("country"), _ascii_name(data.get("city")), "ip-api.com"
     except Exception as e:
         logger.warning(f"ip-api.com lookup failed for {ip}: {e}")
 
