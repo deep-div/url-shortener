@@ -11,7 +11,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/analytics/:code" element={<AnalyticsPage />} />
-        <Route path="/r/:code" element={<RedirectPage />} />
+        <Route path="/:code" element={<RedirectPage />} />
       </Routes>
     </BrowserRouter>
   );

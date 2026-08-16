@@ -44,7 +44,7 @@ def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
     return [ClicksByHourItem(date=date, hours=hours) for date, hours in sorted(grouped.items())]
 
 
-def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
+async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     ipv4 = request.query_params.get("ipv4", "").strip()
     ipv6 = request.query_params.get("ipv6", "").strip()
 
@@ -61,9 +61,10 @@ def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         ip = _normalize_ip(raw_ip) if raw_ip else raw_ip
 
     logger.info(f"Click captured from IP: {ip} (ipv4={ipv4 or 'none'}, ipv6={ipv6 or 'none'})")
-    country, city = None, None
+    country, city, geo_source = None, None, None
     if ip and _is_public_ip(ip):
-        country, city = get_location(ip)
+        country, city, geo_source = await get_location(ip)
+    logger.info(f"Location resolved: {country}, {city} via {geo_source} for IP: {ip}")
 
     raw_ua = request.headers.get("user-agent", "")
     device, browser, os_name = None, None, None
@@ -125,6 +126,6 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
 
 async def run_url_analytics(code: str, request: Request) -> None:
     """Background task — creates its own DB session, off the critical path."""
-    click = parse_click_data(code, request)
+    click = await parse_click_data(code, request)
     async with AsyncSessionLocal() as db:
         await UrlRepository(db).save_analytics(click)
