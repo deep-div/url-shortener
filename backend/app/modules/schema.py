@@ -9,31 +9,6 @@ class DeviceType(str, Enum):
     Desktop = "Desktop"
     Other = "Other"
 
-
-class OsType(str, Enum):
-    Windows = "Windows"
-    macOS = "macOS"
-    Android = "Android"
-    iOS = "iOS"
-    Linux = "Linux"
-    ChromeOS = "Chrome OS"
-    Other = "Other"
-
-    @classmethod
-    def from_ua(cls, raw: str) -> "OsType":
-        _map = {
-            "windows": cls.Windows,
-            "android": cls.Android,
-            "ios": cls.iOS,
-            "mac os x": cls.macOS,
-            "macos": cls.macOS,
-            "ubuntu": cls.Linux,
-            "linux": cls.Linux,
-            "chrome os": cls.ChromeOS,
-        }
-        return _map.get(raw.lower(), cls.Other)
-
-
 class ShortenResponse(BaseModel):
     short_url: str
     code: str
@@ -48,7 +23,7 @@ class AnalyticsResponse(BaseModel):
     city: str | None
     device: DeviceType | None
     browser: str | None
-    os: OsType | None
+    os: str | None
 
     class Config:
         from_attributes = True

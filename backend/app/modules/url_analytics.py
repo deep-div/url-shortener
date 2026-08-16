@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.schema import (
     AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, ClicksByHourItem,
-    LinkInfo, SummaryInfo, DeviceType, OsType,
+    LinkInfo, SummaryInfo, DeviceType,
 )
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
@@ -66,8 +66,7 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         else:
             device = DeviceType.Other
         browser = ua.browser.family or None
-        raw_os = ua.os.family or ""
-        os_name = OsType.from_ua(raw_os) if raw_os else None
+        os_name = ua.os.family or None
 
     return AnalyticsResponse(
         code=code,
