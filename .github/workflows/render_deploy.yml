@@ -2,12 +2,6 @@ name: Render Serverless Deployment
 
 on:
   workflow_dispatch:
-    inputs:
-      run_complete_workflow:
-        description: "Run complete workflow"
-        required: true
-        default: false
-        type: boolean
 
 jobs:
   build-and-push:
