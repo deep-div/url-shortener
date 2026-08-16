@@ -14,6 +14,7 @@ from app.clients.postgresql import AsyncSessionLocal
 from app.clients.geoip import get_location
 
 import user_agents
+from app.core.logging import logger
 
 IST = pytz.timezone("Asia/Kolkata")
 
@@ -38,6 +39,7 @@ def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         or request.headers.get("x-real-ip")
         or (request.client.host if request.client else None)
     )
+    logger.info(f"Click captured from IP: {ip}")
     country, city = None, None
     if ip and _is_public_ip(ip):
         country, city = get_location(ip)
