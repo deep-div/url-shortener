@@ -6,7 +6,7 @@ A fast, minimal URL shortener with click analytics. Paste a long URL, get a shor
 
 **Demo**
 
-https://github.com/user-attachments/assets/app.webm
+[app.webm](https://github.com/user-attachments/assets/8fa95e97-3497-4bca-bd36-2d52b51f414c)
 
 > Short a URL and copy the link in seconds.
 
