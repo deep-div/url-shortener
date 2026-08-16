@@ -99,6 +99,7 @@ class UrlShortener:
             asyncio.create_task(_set_cache(row.long_url, code))
             return row.long_url
 
+        logger.warning(f"Code not found in cache or DB: {code}")
         return None
 
     def _random_code(self) -> str:

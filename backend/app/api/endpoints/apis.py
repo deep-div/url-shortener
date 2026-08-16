@@ -3,8 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-
-_REDIRECT_TEMPLATE = (Path(__file__).parent / "redirect.html").read_text()
+from app.core.logging import logger
 from app.clients.postgresql import get_db
 from app.modules.security import validate_url
 from app.modules.url_shortner import run_url_shortener, run_resolve_code
@@ -13,6 +12,13 @@ from app.modules.schema import UrlStatsResponse
 from app.api.endpoints.utils import extract_code
 
 router = APIRouter()
+
+
+try:
+    _REDIRECT_TEMPLATE = (Path(__file__).parent / "redirect.html").read_text()
+except Exception as e:
+    logger.error(f"Failed to load redirect.html template: {e}")
+    raise
 
 
 @router.post("/v1/shorten")
@@ -29,8 +35,8 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
 async def redirect_to_url(code: str, db: AsyncSession = Depends(get_db)):
     long_url = await run_resolve_code(code, db)
     if not long_url:
+        logger.warning(f"Short code not found: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
-    # get IPV4 and send to analytics 
     html = _REDIRECT_TEMPLATE.replace("{{long_url}}", long_url).replace("{{code}}", code)
     return HTMLResponse(content=html)
 

@@ -112,6 +112,9 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
 
 async def run_url_analytics(code: str, request: Request) -> None:
     """Background task — creates its own DB session, off the critical path."""
-    click = await parse_click_data(code, request)
-    async with AsyncSessionLocal() as db:
-        await UrlRepository(db).save_analytics(click)
+    try:
+        click = await parse_click_data(code, request)
+        async with AsyncSessionLocal() as db:
+            await UrlRepository(db).save_analytics(click)
+    except Exception as e:
+        logger.error(f"Analytics save failed for code {code}: {e}")
