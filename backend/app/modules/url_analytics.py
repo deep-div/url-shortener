@@ -26,6 +26,17 @@ def _is_public_ip(ip: str) -> bool:
         return False
 
 
+def _normalize_ip(ip: str) -> str:
+    """Extract IPv4 from IPv4-mapped IPv6 (::ffff:x.x.x.x), otherwise return as-is."""
+    try:
+        addr = ipaddress.ip_address(ip)
+        if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped:
+            return str(addr.ipv4_mapped)
+    except ValueError:
+        pass
+    return ip
+
+
 def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
     grouped: dict[str, dict[int, int]] = {}
     for r in rows:
@@ -34,12 +45,16 @@ def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
 
 
 def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
-    ip = (
+    raw_ip = (
         request.headers.get("x-forwarded-for", "").split(",")[0].strip()
         or request.headers.get("x-real-ip")
         or (request.client.host if request.client else None)
     )
-    logger.info(f"Click captured from IP: {ip}")
+    ip = _normalize_ip(raw_ip) if raw_ip else raw_ip
+    if ip != raw_ip:
+        logger.info(f"Click captured from IP: IPv6={raw_ip} IPv4={ip}")
+    else:
+        logger.info(f"Click captured from IP: {ip}")
     country, city = None, None
     if ip and _is_public_ip(ip):
         country, city = get_location(ip)
