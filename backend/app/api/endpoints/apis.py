@@ -1,6 +1,5 @@
 import datetime
 from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.postgresql import get_db
 from app.modules.security import validate_url
@@ -22,15 +21,15 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
     return await run_url_shortener(url, db)
 
 
-@router.get("/{code}")
-async def redirect_to_url(code: str, request: Request, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+@router.get("/v1/resolve/{code}")
+async def resolve_url(code: str, request: Request, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     long_url = await run_resolve_code(code, db)
     if not long_url:
         raise HTTPException(status_code=404, detail="Short code not found")
 
     background_tasks.add_task(run_url_analytics, code, request)
 
-    return RedirectResponse(url=long_url, status_code=302)
+    return {"long_url": long_url}
 
 
 @router.get("/v1/analytics/{code}", response_model=UrlStatsResponse)
@@ -43,6 +42,3 @@ async def get_url_stats(
     if from_date and not to_date:
         to_date = from_date
     return await fetch_url_stats(extract_code(code), db, from_date, to_date)
-
-
-

@@ -17,9 +17,21 @@ export default function RedirectPage() {
         ipv4 = data4.ip || '';
         ipv6 = data6.ip || '';
       } catch {
-        // fall back to letting the backend detect the IP
+        // proceed without IPs, backend will detect from headers
       }
-      window.location.href = `/${code}?ipv4=${ipv4}&ipv6=${ipv6}`;
+
+      try {
+        const params = new URLSearchParams({ ipv4, ipv6 });
+        const res = await fetch(`/v1/resolve/${code}?${params}`);
+        if (!res.ok) {
+          window.location.href = '/';
+          return;
+        }
+        const { long_url } = await res.json();
+        window.location.href = long_url;
+      } catch {
+        window.location.href = '/';
+      }
     }
     redirect();
   }, [code]);
