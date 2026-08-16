@@ -5,7 +5,6 @@ on:
 
 jobs:
   build-and-push:
-    if: ${{ inputs.run_complete_workflow == true }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -36,7 +35,6 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy-render:
-    if: ${{ inputs.run_complete_workflow == true }}
     runs-on: ubuntu-latest
     environment: production
     needs: [build-and-push]
