@@ -13,9 +13,9 @@
                     .catch(function() { return {ip: ""}; })
                     .then(function(data) {
                         var ipv4 = data.ip || "";
-                        fetch("/v1/record/" + code + "?ipv4=" + encodeURIComponent(ipv4));
+                        fetch("/v1/record/" + code + "?ipv4=" + encodeURIComponent(ipv4), { keepalive: true });
+                        window.location.replace(longUrl);
                     });
-                window.location.replace(longUrl);
             })();
         </script>
     </body>
