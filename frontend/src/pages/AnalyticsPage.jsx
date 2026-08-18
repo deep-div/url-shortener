@@ -42,11 +42,9 @@ function ExternalLinkIcon() {
   );
 }
 
-function _increment(list, key) {
-  if (!key) return list;
-  const exists = list.find((i) => i.label === key);
-  if (exists) return list.map((i) => i.label === key ? { ...i, count: i.count + 1 } : i);
-  return [...list, { label: key, count: 1 }];
+function _increment(obj, key) {
+  if (!key || !obj) return obj;
+  return { ...obj, [key]: (obj[key] ?? 0) + 1 };
 }
 
 function getRangeDates(value) {
