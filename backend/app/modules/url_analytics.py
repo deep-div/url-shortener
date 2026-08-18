@@ -1,5 +1,6 @@
 import datetime
 import ipaddress
+import json
 import pytz
 
 from fastapi import HTTPException, Request
@@ -11,6 +12,7 @@ from app.modules.schema import (
 )
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
+from app.clients.redis import redis_client
 from app.clients.geoip import get_location
 
 import user_agents
@@ -115,5 +117,15 @@ async def run_url_analytics(code: str, request: Request) -> None:
         click = await parse_click_data(code, request)
         async with AsyncSessionLocal() as db:
             await UrlRepository(db).save_analytics(click)
+        payload = json.dumps({
+            "code": click.code,
+            "clicked_at": click.clicked_at.isoformat(),
+            "country": click.country,
+            "city": click.city,
+            "device": click.device.value if click.device else None,
+            "browser": click.browser,
+            "os": click.os,
+        })
+        await redis_client.publish(f"analytics:{code}", payload)
     except Exception as e:
         logger.error(f"Analytics save failed for code {code}: {e}")

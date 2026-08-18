@@ -10,7 +10,7 @@ POOL_TARGET = 500       # codes to keep ready
 POOL_THRESHOLD = 200    # refill when pool drops below this
 CODE_ALPHABET = string.digits + string.ascii_letters
 CODE_LEN = 7
-CHECK_INTERVAL = 30     # seconds between pool size checks
+CHECK_INTERVAL = 30000     # seconds between pool size checks
 
 
 async def _fill_pool() -> None:

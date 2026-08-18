@@ -20,7 +20,7 @@ except Exception as e:
     logger.error(f"Failed to load redirect.html template: {e}")
     raise
 
-
+## API to Shorten URL
 @router.post("/v1/shorten")
 async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
     try:
@@ -29,6 +29,11 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
         raise HTTPException(status_code=400, detail=str(e))
 
     return await run_url_shortener(url, db)
+
+## API used by browser, Short URL redirects to Long URL
+@router.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    raise HTTPException(status_code=404)
 
 
 @router.get("/{code}")
@@ -40,7 +45,7 @@ async def redirect_to_url(code: str, db: AsyncSession = Depends(get_db)):
     html = _REDIRECT_TEMPLATE.replace("{{long_url}}", long_url).replace("{{code}}", code)
     return HTMLResponse(content=html)
 
-
+# Fired by HTML to Record in DB, saves to postgre and redis 
 @router.get("/v1/record/{code}")
 async def record_click(code: str, request: Request, background_tasks: BackgroundTasks):
     background_tasks.add_task(run_url_analytics, code, request)

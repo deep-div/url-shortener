@@ -6,6 +6,7 @@ import MetricBars from '../components/MetricBars.jsx';
 import StatsSummaryBar from '../components/StatsSummaryBar.jsx';
 import { getUrlStats } from '../api/api.js';
 import { useClipboard } from '../hooks/useClipboard.js';
+import { useAnalyticsSocket } from '../hooks/useAnalyticsSocket.js';
 
 function BackIcon() {
   return (
@@ -41,6 +42,13 @@ function ExternalLinkIcon() {
   );
 }
 
+function _increment(list, key) {
+  if (!key) return list;
+  const exists = list.find((i) => i.label === key);
+  if (exists) return list.map((i) => i.label === key ? { ...i, count: i.count + 1 } : i);
+  return [...list, { label: key, count: 1 }];
+}
+
 function getRangeDates(value) {
   const today = new Date();
   const fmt = (d) => d.toISOString().split('T')[0];
@@ -70,6 +78,34 @@ export default function AnalyticsPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [code, range]);
+
+  useAnalyticsSocket(code, (click) => {
+    setData((prev) => {
+      if (!prev) return prev;
+
+      const today = new Date().toISOString().split('T')[0];
+      const summary = { ...prev.summary };
+      summary.total_clicks = (summary.total_clicks ?? 0) + 1;
+      summary.last_clicked_at = click.clicked_at;
+
+      // clicks_by_day — increment today or append
+      const clicks_by_day = prev.clicks_by_day.map((d) =>
+        d.date === today ? { ...d, clicks: d.clicks + 1 } : d
+      );
+      if (!clicks_by_day.find((d) => d.date === today)) {
+        clicks_by_day.push({ date: today, clicks: 1 });
+      }
+
+      // by_country
+      const by_country = _increment(prev.by_country, click.country);
+      const by_city    = _increment(prev.by_city, click.city);
+      const by_device  = _increment(prev.by_device, click.device);
+      const by_browser = _increment(prev.by_browser, click.browser);
+      const by_os      = _increment(prev.by_os, click.os);
+
+      return { ...prev, summary, clicks_by_day, by_country, by_city, by_device, by_browser, by_os };
+    });
+  });
 
   if (loading) {
     return (
