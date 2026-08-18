@@ -86,6 +86,13 @@ export default function AnalyticsPage() {
       summary.total_clicks = (summary.total_clicks ?? 0) + 1;
       summary.last_clicked_at = click.clicked_at;
 
+      if (click.country && !prev.by_country?.[click.country]) {
+        summary.total_countries = (summary.total_countries ?? 0) + 1;
+      }
+      if (click.city && !prev.by_city?.[click.city]) {
+        summary.total_cities = (summary.total_cities ?? 0) + 1;
+      }
+
       // clicks_by_day — increment today or append
       const clicks_by_day = prev.clicks_by_day.map((d) =>
         d.date === today ? { ...d, clicks: d.clicks + 1 } : d
@@ -94,7 +101,6 @@ export default function AnalyticsPage() {
         clicks_by_day.push({ date: today, clicks: 1 });
       }
 
-      // by_country
       const by_country = _increment(prev.by_country, click.country);
       const by_city    = _increment(prev.by_city, click.city);
       const by_device  = _increment(prev.by_device, click.device);
