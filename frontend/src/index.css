@@ -492,7 +492,8 @@ img, svg { display: block; }
 
 /* Ranked bar list */
 .metric-list { display: flex; flex-direction: column; }
-.metric-list-scroll { flex: 1; overflow-y: auto; padding-right: 6px; }
+.metric-list-scroll { flex: 1; overflow-y: auto; padding-right: 6px; scrollbar-width: none; }
+.metric-list-scroll::-webkit-scrollbar { display: none; }
 .metric-row {
   display: flex; align-items: center; gap: 12px;
   padding: 7px 0;
