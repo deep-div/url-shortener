@@ -12,7 +12,7 @@ CODE_ALPHABET = string.digits + string.ascii_letters
 CODE_LEN = 7
 CHECK_INTERVAL = 30000     # seconds between pool size checks
 
-
+ 
 async def _fill_pool() -> None:
     current = await redis_client.llen(POOL_KEY)
     if current >= POOL_THRESHOLD:
