@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, ForeignKey, String, Text, DateTime, UniqueConstraint
+from sqlalchemy import BigInteger, Column, ForeignKey, Index, String, Text, DateTime, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 import datetime
@@ -25,7 +25,7 @@ class Analytics(Base):
     __tablename__ = "analytics"
 
     id         = Column(BigInteger, primary_key=True, autoincrement=True)
-    code       = Column(String, ForeignKey("urls.code"), nullable=False, index=True)
+    code       = Column(String, ForeignKey("urls.code"), nullable=False)
     clicked_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(IST), nullable=False)
     ip         = Column(String, nullable=True)
     country    = Column(String, nullable=True)
@@ -33,6 +33,11 @@ class Analytics(Base):
     device     = Column(String, nullable=True)
     browser    = Column(String, nullable=True)
     os         = Column(String, nullable=True)
+
+    __table_args__ = (
+        Index("index_code_clickedat", "code", "clicked_at"),
+        Index("index_code_ip", "code", "ip"),
+    )
 
 
 class UniqueIp(Base):
