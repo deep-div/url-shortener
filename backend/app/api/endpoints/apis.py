@@ -30,12 +30,12 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
 
     return await run_url_shortener(url, db)
 
-## API used by browser, Short URL redirects to Long URL
+## Just to make sure no icon comes on the new window opening in browser when user clicks
 @router.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     raise HTTPException(status_code=404)
 
-
+## API used by browser, Short URL redirects to Long URL
 @router.get("/{code}")
 async def redirect_to_url(code: str, db: AsyncSession = Depends(get_db)):
     long_url = await run_resolve_code(code, db)

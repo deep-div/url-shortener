@@ -116,7 +116,7 @@ async def run_url_analytics(code: str, request: Request) -> None:
     try:
         click = await parse_click_data(code, request)
         async with AsyncSessionLocal() as db:
-            await UrlRepository(db).save_analytics(click)
+            is_unique = await UrlRepository(db).save_analytics(click)
         payload = json.dumps({
             "code": click.code,
             "clicked_at": click.clicked_at.isoformat(),
@@ -125,6 +125,7 @@ async def run_url_analytics(code: str, request: Request) -> None:
             "device": click.device.value if click.device else None,
             "browser": click.browser,
             "os": click.os,
+            "is_unique": is_unique,
         })
         await redis_client.publish(f"analytics:{code}", payload)
     except Exception as e:

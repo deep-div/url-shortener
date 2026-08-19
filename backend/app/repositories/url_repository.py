@@ -35,7 +35,12 @@ class UrlRepository:
         row = result.scalar_one()
         return row, row.code != code
 
-    async def save_analytics(self, click) -> None:
+    async def save_analytics(self, click) -> bool:
+        existing = await self.session.execute(
+            select(Analytics.id).filter(Analytics.code == click.code, Analytics.ip == click.ip).limit(1)
+        )
+        is_unique = existing.scalar_one_or_none() is None
+
         row = Analytics(
             code=click.code,
             clicked_at=click.clicked_at,
@@ -48,6 +53,7 @@ class UrlRepository:
         )
         self.session.add(row)
         await self.session.commit()
+        return is_unique
 
     #  Analytics — read (per URL)
 

@@ -84,6 +84,7 @@ export default function AnalyticsPage() {
       const today = new Date().toISOString().split('T')[0];
       const summary = { ...prev.summary };
       summary.total_clicks = (summary.total_clicks ?? 0) + 1;
+      if (click.is_unique) summary.unique_clicks = (summary.unique_clicks ?? 0) + 1;
       summary.last_clicked_at = click.clicked_at;
 
       if (click.country && !prev.by_country?.[click.country]) {
