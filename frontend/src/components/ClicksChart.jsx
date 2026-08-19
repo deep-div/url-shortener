@@ -220,8 +220,8 @@ export default function ClicksChart({ data, peakHours, range = 'all', onRangeCha
   return (
     <div className="chart-card">
       <div className="chart-card-head">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="chart-title">Clicks Over Time</div>
+        <div className="chart-title">Clicks Over Time</div>
+        <div className="chart-head-right">
           <div className="metric-toggle" role="tablist">
             <button
               role="tab"
@@ -240,8 +240,6 @@ export default function ClicksChart({ data, peakHours, range = 'all', onRangeCha
               Hours
             </button>
           </div>
-        </div>
-        <div className="chart-head-right">
           <ChartTypeToggle chartType={chartType} onChartTypeChange={setChartType} />
           <RangeDropdown range={range} onRangeChange={onRangeChange} />
         </div>
