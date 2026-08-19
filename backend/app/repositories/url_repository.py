@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date, case, extract
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from app.repositories.models import Analytics, Url
+from app.repositories.models import Analytics, UniqueIp, Url
 import datetime
 import pytz
 
@@ -36,12 +36,16 @@ class UrlRepository:
         return row, row.code != code
 
     async def save_analytics(self, click) -> bool:
-        existing = await self.session.execute(
-            select(Analytics.id).filter(Analytics.code == click.code, Analytics.ip == click.ip).limit(1)
+        stmt = (
+            pg_insert(UniqueIp)
+            .values(code=click.code, ip=click.ip)
+            .on_conflict_do_nothing(constraint="unique_contraint_code_ip")
+            .returning(UniqueIp.id)
         )
-        is_unique = existing.scalar_one_or_none() is None
+        result = await self.session.execute(stmt)
+        is_unique = result.scalar_one_or_none() is not None
 
-        row = Analytics(
+        self.session.add(Analytics(
             code=click.code,
             clicked_at=click.clicked_at,
             ip=click.ip,
@@ -50,8 +54,7 @@ class UrlRepository:
             device=click.device,
             browser=click.browser,
             os=click.os,
-        )
-        self.session.add(row)
+        ))
         await self.session.commit()
         return is_unique
 
