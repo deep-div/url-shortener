@@ -595,7 +595,8 @@ img, svg { display: block; }
   .url-form-inner { flex-direction: column; gap: 8px; padding: 12px; }
   .url-input-wrap { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
   .url-form-btn { justify-content: center; width: 100%; border-radius: var(--radius-md); }
-  .chart-card-head { flex-wrap: wrap; row-gap: 10px; }
+  .chart-card-head { gap: 8px; }
+  .chart-card-head > div:first-child { flex-wrap: wrap; row-gap: 6px; flex: 1; min-width: 0; }
   .chart-type-btn { width: 36px; height: 36px; }
   .hero-bottom-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .hero-stat-item { justify-content: flex-start; padding: 16px 18px; }
