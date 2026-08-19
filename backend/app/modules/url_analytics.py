@@ -67,8 +67,11 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
             device = DeviceType.Desktop
         else:
             device = DeviceType.Other
+            logger.warning(f"Unrecognised user-agent for code {code}: {raw_ua[:120]}")
         browser = ua.browser.family or None
         os_name = ua.os.family or None
+    else:
+        logger.warning(f"Missing user-agent header for code: {code}")
 
     return AnalyticsResponse(
         code=code,
@@ -86,6 +89,7 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
     if not url_row:
+        logger.warning(f"Analytics requested for unknown code: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
     summary_data = await repo.get_summary(code, url_row.created_at)
     by_country = await repo.get_breakdown(code, "country", from_date, to_date)
@@ -117,6 +121,7 @@ async def run_url_analytics(code: str, request: Request) -> None:
         click = await parse_click_data(code, request)
         async with AsyncSessionLocal() as db:
             is_unique = await UrlRepository(db).save_analytics(click)
+        logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
         payload = json.dumps({
             "code": click.code,
             "clicked_at": click.clicked_at.isoformat(),
@@ -128,5 +133,6 @@ async def run_url_analytics(code: str, request: Request) -> None:
             "is_unique": is_unique,
         })
         await redis_client.publish(f"analytics:{code}", payload)
+        logger.info(f"Redis publish done for code: {code}")
     except Exception as e:
-        logger.error(f"Analytics save failed for code {code}: {e}")
+        logger.error(f"Analytics save failed for code {code}: {e}", exc_info=True)

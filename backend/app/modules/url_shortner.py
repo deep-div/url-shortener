@@ -94,6 +94,7 @@ class UrlShortener:
             return existing
 
         # cache miss — check PostgreSQL
+        logger.warning(f"Redis cache miss for code: {code}, falling back to DB")
         row = await self.repo.get_by_code(code)
         if row:
             asyncio.create_task(_set_cache(row.long_url, code))

@@ -17,12 +17,9 @@ async def analytics_ws(websocket: WebSocket, code: str):
     await pubsub.subscribe(f"analytics:{code}")
 
     try:
-        while True:
-            message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
-            if message and message.get("type") == "message":
+        async for message in pubsub.listen():
+            if message.get("type") == "message":
                 await websocket.send_text(message["data"])
-            else:
-                await asyncio.sleep(0.05)
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected for code: {code}")
     except Exception as e:
