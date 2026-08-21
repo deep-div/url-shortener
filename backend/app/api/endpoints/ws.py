@@ -1,8 +1,9 @@
 import asyncio
+from contextlib import suppress
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from app.clients.redis import redis_client
+from app.clients.broadcaster import broadcaster
 from app.core.logging import logger
 
 router = APIRouter()
@@ -15,28 +16,48 @@ async def analytics_ws(websocket: WebSocket, code: str):
     await websocket.accept()
     logger.info(f"WebSocket connected for code: {code}")
 
-    pubsub = redis_client.pubsub()
-    await pubsub.subscribe(f"analytics:{code}")
+    # It subscribes to the Broadcaster's in-memory queue. 
+    # This creates an in-memory asyncio queue for that WebSocket and associates it with the code.
+    queue = broadcaster.subscribe(code)
 
     async def ping_loop():
         while True:
             await asyncio.sleep(PING_INTERVAL)
-            try:
-                await websocket.send_text("ping")
-            except Exception:
-                break
+            await websocket.send_text("ping")
+
+    async def send_loop():
+        while True:
+            data = await queue.get()
+            await websocket.send_text(data)
+
+    async def recv_loop():
+        # Never expect real client messages here — this task exists purely
+        # so we notice a client-initiated disconnect immediately, instead of
+        # finding out only when a later send() fails on a dead socket.
+        while True:
+            await websocket.receive_text()
 
     ping_task = asyncio.create_task(ping_loop())
+    send_task = asyncio.create_task(send_loop())
+    recv_task = asyncio.create_task(recv_loop())
+    tasks = [ping_task, send_task, recv_task]
 
     try:
-        async for message in pubsub.listen():
-            if message.get("type") == "message":
-                await websocket.send_text(message["data"])
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_EXCEPTION)
+        for t in done:
+            exc = t.exception()
+            if exc and not isinstance(exc, WebSocketDisconnect):
+                raise exc
     except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected for code: {code}")
+        pass
     except Exception as e:
         logger.error(f"WebSocket error for code {code}: {e}")
     finally:
-        ping_task.cancel()
-        await pubsub.unsubscribe(f"analytics:{code}")
-        await pubsub.aclose()
+        logger.info(f"WebSocket disconnected for code: {code}")
+        for t in tasks:
+            t.cancel()
+        for t in tasks:
+            with suppress(asyncio.CancelledError, Exception):
+                await t
+        broadcaster.unsubscribe(code, queue)
+

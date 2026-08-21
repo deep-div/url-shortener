@@ -118,10 +118,17 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
 async def run_url_analytics(code: str, request: Request) -> None:
     """Background task — creates its own DB session, off the critical path."""
     try:
+        # Step 1: Visitor clicked the short link — running in the background,
+        # off the redirect's critical path.
+        # Step 2 parse_click_data() → Get IP, geo, device, browser, os, form current API request.
         click = await parse_click_data(code, request)
+
+        # Step 3: Persist the click to Postgres 
         async with AsyncSessionLocal() as db:
             is_unique = await UrlRepository(db).save_analytics(click)
         logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
+
+        # Step 4: Build the payload that will be broadcast to live viewers
         payload = json.dumps({
             "code": click.code,
             "clicked_at": click.clicked_at.isoformat(),
@@ -132,6 +139,11 @@ async def run_url_analytics(code: str, request: Request) -> None:
             "os": click.os,
             "is_unique": is_unique,
         })
+
+        # Step 5: Publish to Redis channel "analytics:{code}"
+        #   all codes go to single shared Broadcaster subscription, Broadcaster receives the event and sends it to all viewers watching this code
+        # This publishes to the Redis channel analytics:abc123. Redis sends that message to the Broadcaster.
+        #   WebSocket viewer's in-memory queue (app/api/endpoints/ws.py)
         await redis_client.publish(f"analytics:{code}", payload)
         logger.info(f"Redis publish done for code: {code}")
     except Exception as e:
