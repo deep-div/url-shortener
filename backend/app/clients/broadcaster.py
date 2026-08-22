@@ -14,7 +14,7 @@ class Broadcaster:
     """
     Single shared Redis pub/sub connection for the whole process.
 
-    Instead of every WebSocket client opening its own `redis_client.pubsub()`
+    Instead of every SSE client opening its own `redis_client.pubsub()`
     connection (1 dedicated Redis connection per client - doesn't scale),
     this keeps exactly ONE `psubscribe("analytics:*")` connection open and
     fans incoming messages out to in-process asyncio.Queue objects keyed by

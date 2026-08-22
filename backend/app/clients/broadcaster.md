@@ -1,14 +1,14 @@
 # Redis Pub/Sub Broadcast Flow
 ##### Advantages:
-1. Isolation between WebSockets: Each user has their own queue. If one user's connection is slow or frozen, their queue backs up — it does NOT block other users from receiving the snapshot. A slow user in London doesn't delay a fast user in Mumbai.
-2. Without Broadcaster:  (connection is Psubscibe, pattern subscription)
+1. Isolation between SSE clients: Each user has their own queue. If one user's connection is slow or frozen, their queue backs up — it does NOT block other users from receiving the snapshot. A slow user in London doesn't delay a fast user in Mumbai.
+2. Without Broadcaster:  (connection is Psubscribe, pattern subscription)
 10k users → 10k Redis connections → Redis gets hammered
 With Broadcaster:
 10k users → 1 Redis connection → Redis gets 1 message
                     │
                     └── Broadcaster fans out to 10k queues in-process (no network)
 3. Clean disconnect handling
-When a WebSocket breaks, its queue is simply removed from the set. The Broadcaster doesn't know or care. Next publish just skips that queue because it's gone. No error, no crash, no effect on other users.
+When an SSE connection closes, its queue is simply removed from the set. The Broadcaster doesn't know or care. Next publish just skips that queue because it's gone. No error, no crash, no effect on other users.
 4.  Drop policy on slow consumers (QUEUE_MAXSIZE)
                               Redis
                                 │
@@ -34,7 +34,7 @@ When a WebSocket breaks, its queue is simply removed from the set. The Broadcast
         A      B     C     A     B     C     A     B     C
         │      │     │     │     │     │     │     │     │
         ▼      ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
-       WS     WS    WS    WS    WS    WS    WS    WS    WS
+      SSE    SSE   SSE   SSE   SSE   SSE   SSE   SSE   SSE
         │      │     │     │     │     │     │     │     │
         ▼      ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
       User   User  User  User  User  User  User  User  User
@@ -49,7 +49,7 @@ When a WebSocket breaks, its queue is simply removed from the set. The Broadcast
         A      B     C               A      B     C
         │      │     │               │      │     │
         ▼      ▼     ▼               ▼      ▼     ▼
-       WS     WS    WS              WS     WS    WS
+      SSE    SSE   SSE             SSE    SSE   SSE
         │      │     │               │      │     │
         ▼      ▼     ▼               ▼      ▼     ▼
       User   User  User            User   User  User
@@ -67,7 +67,7 @@ When a WebSocket breaks, its queue is simply removed from the set. The Broadcast
                          A     B     C
                          │     │     │
                          ▼     ▼     ▼
-                        WS    WS    WS
+                        SSE   SSE   SSE
                          │     │     │
                          ▼     ▼     ▼
                        User  User  User
@@ -89,16 +89,16 @@ Broadcaster receives 10k snapshots one by one
 
 1 PSUBSCRIBE pattern
         │
-        ├── analytics:code1  → multiple queues → WebSockets
-        ├── analytics:code2  → multiple queues → WebSockets
-        ├── analytics:code3  → multiple queues → WebSockets
-        ├── analytics:code4  → multiple queues → WebSockets
-        ├── analytics:code5  → multiple queues → WebSockets
-        ├── analytics:code6  → multiple queues → WebSockets
-        ├── analytics:code7  → multiple queues → WebSockets
-        ├── analytics:code8  → multiple queues → WebSockets
-        ├── analytics:code9  → multiple queues → WebSockets
-        └── analytics:code10 → multiple queues → WebSockets
+        ├── analytics:code1  → multiple queues → SSE clients
+        ├── analytics:code2  → multiple queues → SSE clients
+        ├── analytics:code3  → multiple queues → SSE clients
+        ├── analytics:code4  → multiple queues → SSE clients
+        ├── analytics:code5  → multiple queues → SSE clients
+        ├── analytics:code6  → multiple queues → SSE clients
+        ├── analytics:code7  → multiple queues → SSE clients
+        ├── analytics:code8  → multiple queues → SSE clients
+        ├── analytics:code9  → multiple queues → SSE clients
+        └── analytics:code10 → multiple queues → SSE clients
 
 
 # Example: One Click on code5
@@ -125,9 +125,9 @@ Broadcaster._listen()
         ▼
 _subscribers["code5"]
         │
-        ├── Queue A → WebSocket A → Dashboard A → setData(snapshot)
-        ├── Queue B → WebSocket B → Dashboard B → setData(snapshot)
-        └── Queue C → WebSocket C → Dashboard C → setData(snapshot)
+        ├── Queue A → SSE A → Dashboard A → setData(snapshot)
+        ├── Queue B → SSE B → Dashboard B → setData(snapshot)
+        └── Queue C → SSE C → Dashboard C → setData(snapshot)
 
 1 Redis publish. N browsers receive the same snapshot.
 Browser replaces state directly — no math, no merging.

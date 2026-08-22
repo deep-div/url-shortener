@@ -160,8 +160,8 @@ async def run_url_analytics(code: str, request: Request) -> None:
 
         # Step 5: Serialize the full stats snapshot and publish to Redis channel "analytics:{code}".
         # The Broadcaster holds a single pattern subscription PSUBSCRIBE("analytics:*") connection and fans
-        # the message out to every asyncio.Queue registered for this code — one per connected WebSocket.
-        # Each WS send_loop() picks it off the queue and pushes the snapshot to the browser.
+        # the message out to every asyncio.Queue registered for this code — one per connected SSE client.
+        # Each SSE event_stream() picks it off the queue and pushes the snapshot to the browser.
         # The browser replaces its state directly — no incrementing, no merging logic.
         snapshot = json.dumps(build_live_snapshot(stats))
         await redis_client.publish(f"analytics:{code}", snapshot)
