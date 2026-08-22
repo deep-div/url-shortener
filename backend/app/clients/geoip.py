@@ -41,6 +41,10 @@ def _ascii_name(name: str | None) -> str | None:
 
 
 async def get_location(ip: str) -> tuple[str | None, str | None, str]:
+    country, city = _geoip_lookup(ip)
+    if country:
+        return country, city, "geoip2"
+
     try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             response = await client.get(f"http://ip-api.com/json/{ip}?fields=status,country,city")
@@ -50,5 +54,4 @@ async def get_location(ip: str) -> tuple[str | None, str | None, str]:
     except Exception as e:
         logger.warning(f"ip-api.com lookup failed for {ip}: {e}")
 
-    country, city = _geoip_lookup(ip)
-    return country, city, "geoip2"
+    return None, None, "unresolved"
