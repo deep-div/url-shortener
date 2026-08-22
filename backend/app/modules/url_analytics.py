@@ -13,7 +13,7 @@ from app.modules.schema import (
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
-from app.modules.counters_redis import is_populated, populate_from_db, increment_counters, get_snapshot
+from app.modules.counters_redis import try_claim_cold_start, populate_from_db, increment_counters, get_snapshot
 from app.clients.geoip import get_location
 
 import user_agents
@@ -147,27 +147,23 @@ async def run_url_analytics(code: str, request: Request) -> None:
         # to get country, city, device type, browser, OS from the original request.
         click = await parse_click_data(code, request)
 
-        cold_started = False
         async with AsyncSessionLocal() as db:
-            # Step 3: Persist the click to Postgres.
+            # Step 3: Cold start — before saving this click, atomically claim the right
+            # to populate Redis from Postgres. Done pre-save so populate loads the
+            # pre-click baseline. All concurrent losers wait until populate finishes.
+            if await try_claim_cold_start(code):
+                stats = await get_url_stats(code, db)
+                await populate_from_db(code, stats)
+
+            # Step 4: Persist the click to Postgres.
             # save_analytics() upserts into unique_ips to detect first-time visitors,
             # then inserts the full click row into analytics and commits.
             is_unique = await UrlRepository(db).save_analytics(click)
             logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
 
-            # Step 4: Cold start — if Redis has no counters for this code yet (first ever click
-            # or after a Redis restart), query Postgres once to populate all hashes.
-            # populate_from_db already includes the click we just saved, so we skip
-            # increment_counters below to avoid double-counting.
-            if not await is_populated(code):
-                stats = await get_url_stats(code, db)
-                await populate_from_db(code, stats)
-                cold_started = True
-
         # Step 5: Increment Redis counters — total_clicks, by_country, by_device, etc.
-        # Skipped on cold start because populate_from_db already has the current click baked in.
-        if not cold_started:
-            await increment_counters(code, click, is_unique)
+        # Always runs — populate_from_db loaded pre-click baseline so +1 here is correct.
+        await increment_counters(code, click, is_unique)
 
         # Step 6: Read the updated snapshot from Redis and publish to channel "analytics:{code}".
         # The Broadcaster fans the message out to every asyncio.Queue — one per connected SSE client.

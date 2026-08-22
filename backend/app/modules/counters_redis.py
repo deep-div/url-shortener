@@ -1,3 +1,5 @@
+import asyncio
+
 from app.clients.redis import redis_client
 
 
@@ -7,6 +9,31 @@ def _key(code: str, bucket: str) -> str:
 
 async def is_populated(code: str) -> bool:
     return bool(await redis_client.exists(_key(code, "summary")))
+
+
+async def try_claim_cold_start(code: str) -> bool:
+    """Atomically claim the cold start for this code.
+    Returns True if this caller won the race and must populate Redis.
+    Returns False if Redis is already populated (caller should just increment).
+    Concurrent losers wait until the winner finishes populating before returning False.
+    Lock expires in 10s to self-heal if the winner crashes mid-populate.
+    """
+    if await is_populated(code):
+        return False
+
+    lock_key = f"analytics:{code}:init_lock"
+    claimed = await redis_client.set(lock_key, "1", nx=True, ex=10)
+    if claimed:
+        # This caller won — it must populate Redis then release the lock
+        return True
+
+    # Lost the race — wait until the winner finishes populating
+    for _ in range(20):
+        await asyncio.sleep(0.5)
+        if await is_populated(code):
+            return False
+    # Timeout — winner likely crashed, just increment anyway (slightly off but self-heals)
+    return False
 
 
 async def populate_from_db(code: str, stats) -> None:
