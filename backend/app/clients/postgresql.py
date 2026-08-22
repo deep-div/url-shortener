@@ -9,10 +9,19 @@ DATABASE_URL = (
 
 engine = create_async_engine(
     DATABASE_URL,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5,
+    max_overflow=5,
+    pool_timeout=10,
     pool_recycle=1800,
-    connect_args={"ssl": "require"},
+    connect_args={
+        "ssl": "require",
+        # Required when connecting through Supabase's Supavisor pooler in
+        # transaction mode (port 6543): it doesn't support server-side
+        # prepared statements shared across pooled connections, so asyncpg's
+        # statement cache must be disabled or every query intermittently
+        # fails/misbehaves.
+        "statement_cache_size": 0,
+    },
 )
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
