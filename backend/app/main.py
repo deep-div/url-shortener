@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import router
 from app.workers.code_pool import run_code_pool_worker
 from app.clients.geoip import init_geoip
-from app.clients.broadcaster import broadcaster
+from app.modules.broadcaster import broadcaster
 from app.core.logging import logger
 
 

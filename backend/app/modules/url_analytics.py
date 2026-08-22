@@ -13,6 +13,7 @@ from app.modules.schema import (
 from app.repositories.url_repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
+from app.modules.counters_redis import is_populated, populate_from_db, increment_counters, get_snapshot
 from app.clients.geoip import get_location
 
 import user_agents
@@ -146,6 +147,7 @@ async def run_url_analytics(code: str, request: Request) -> None:
         # to get country, city, device type, browser, OS from the original request.
         click = await parse_click_data(code, request)
 
+        cold_started = False
         async with AsyncSessionLocal() as db:
             # Step 3: Persist the click to Postgres.
             # save_analytics() upserts into unique_ips to detect first-time visitors,
@@ -153,17 +155,24 @@ async def run_url_analytics(code: str, request: Request) -> None:
             is_unique = await UrlRepository(db).save_analytics(click)
             logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
 
-            # Step 4: Re-query fresh all-time aggregated stats from Postgres in the same
-            # session (post-commit, so it sees the row we just inserted).
-            # This gives us accurate totals for every metric — no client-side math needed.
-            stats = await get_url_stats(code, db)
+            # Step 4: Cold start — if Redis has no counters for this code yet (first ever click
+            # or after a Redis restart), query Postgres once to populate all hashes.
+            # populate_from_db already includes the click we just saved, so we skip
+            # increment_counters below to avoid double-counting.
+            if not await is_populated(code):
+                stats = await get_url_stats(code, db)
+                await populate_from_db(code, stats)
+                cold_started = True
 
-        # Step 5: Serialize the full stats snapshot and publish to Redis channel "analytics:{code}".
-        # The Broadcaster holds a single pattern subscription PSUBSCRIBE("analytics:*") connection and fans
-        # the message out to every asyncio.Queue registered for this code — one per connected SSE client.
-        # Each SSE event_stream() picks it off the queue and pushes the snapshot to the browser.
+        # Step 5: Increment Redis counters — total_clicks, by_country, by_device, etc.
+        # Skipped on cold start because populate_from_db already has the current click baked in.
+        if not cold_started:
+            await increment_counters(code, click, is_unique)
+
+        # Step 6: Read the updated snapshot from Redis and publish to channel "analytics:{code}".
+        # The Broadcaster fans the message out to every asyncio.Queue — one per connected SSE client.
         # The browser replaces its state directly — no incrementing, no merging logic.
-        snapshot = json.dumps(build_live_snapshot(stats))
+        snapshot = json.dumps(await get_snapshot(code))
         await redis_client.publish(f"analytics:{code}", snapshot)
         logger.info(f"Redis publish done for code: {code}")
     except Exception as e:

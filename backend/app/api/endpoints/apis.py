@@ -52,6 +52,9 @@ async def record_click(code: str, request: Request, background_tasks: Background
     return {}
 
 
+# user opens analytics page
+#   → useEffect fires → HTTP GET /v1/analytics/{code}   ← full data, clicks_by_day, link info, all time info makes a post request which sse cant take so https is needed.
+#   → useAnalyticsSocket fires → GET /v1/sse/analytics/{code} ← also queries Postgres
 @router.get("/v1/analytics/{code}", response_model=UrlStatsResponse)
 async def get_url_stats(
     code: str,

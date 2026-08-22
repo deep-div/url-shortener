@@ -5,7 +5,7 @@ from contextlib import suppress
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from app.clients.broadcaster import broadcaster
+from app.modules.broadcaster import broadcaster
 from app.clients.postgresql import AsyncSessionLocal
 from app.modules.url_analytics import get_url_stats, build_live_snapshot
 from app.core.logging import logger
