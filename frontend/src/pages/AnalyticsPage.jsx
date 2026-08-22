@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ClicksChart from '../components/ClicksChart.jsx';
 import DonutChart from '../components/DonutChart.jsx';
@@ -72,7 +72,11 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [code, range]);
 
+  const rangeRef = useRef(range);
+  rangeRef.current = range;
+
   useAnalyticsSocket(code, (snapshot) => {
+    // Live counters from Redis — update instantly
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -85,6 +89,15 @@ export default function AnalyticsPage() {
         by_os: snapshot.by_os,
       };
     });
+    // Time-series charts live only in Postgres — re-fetch on each click event
+    getUrlStats(code, getRangeDates(rangeRef.current))
+      .then((fresh) => {
+        setData((prev) => {
+          if (!prev) return prev;
+          return { ...prev, clicks_by_day: fresh.clicks_by_day, peak_hours: fresh.peak_hours };
+        });
+      })
+      .catch(() => {});
   });
 
   if (loading) {
