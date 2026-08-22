@@ -42,11 +42,6 @@ function ExternalLinkIcon() {
   );
 }
 
-function _increment(obj, key) {
-  if (!key || !obj) return obj;
-  return { ...obj, [key]: (obj[key] ?? 0) + 1 };
-}
-
 function getRangeDates(value) {
   const today = new Date();
   const fmt = (d) => d.toISOString().split('T')[0];
@@ -77,38 +72,18 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [code, range]);
 
-  useAnalyticsSocket(code, (click) => {
+  useAnalyticsSocket(code, (snapshot) => {
     setData((prev) => {
       if (!prev) return prev;
-
-      const today = new Date().toISOString().split('T')[0];
-      const summary = { ...prev.summary };
-      summary.total_clicks = (summary.total_clicks ?? 0) + 1;
-      if (click.is_unique) summary.unique_clicks = (summary.unique_clicks ?? 0) + 1;
-      summary.last_clicked_at = click.clicked_at;
-
-      if (click.country && !prev.by_country?.[click.country]) {
-        summary.total_countries = (summary.total_countries ?? 0) + 1;
-      }
-      if (click.city && !prev.by_city?.[click.city]) {
-        summary.total_cities = (summary.total_cities ?? 0) + 1;
-      }
-
-      // clicks_by_day — increment today or append
-      const clicks_by_day = prev.clicks_by_day.map((d) =>
-        d.date === today ? { ...d, clicks: d.clicks + 1 } : d
-      );
-      if (!clicks_by_day.find((d) => d.date === today)) {
-        clicks_by_day.push({ date: today, clicks: 1 });
-      }
-
-      const by_country = _increment(prev.by_country, click.country);
-      const by_city    = _increment(prev.by_city, click.city);
-      const by_device  = _increment(prev.by_device, click.device);
-      const by_browser = _increment(prev.by_browser, click.browser);
-      const by_os      = _increment(prev.by_os, click.os);
-
-      return { ...prev, summary, clicks_by_day, by_country, by_city, by_device, by_browser, by_os };
+      return {
+        ...prev,
+        summary: snapshot.summary,
+        by_country: snapshot.by_country,
+        by_city: snapshot.by_city,
+        by_device: snapshot.by_device,
+        by_browser: snapshot.by_browser,
+        by_os: snapshot.by_os,
+      };
     });
   });
 

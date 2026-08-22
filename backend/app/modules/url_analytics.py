@@ -115,36 +115,56 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
     )
 
 
+def build_live_snapshot(stats: UrlStatsResponse) -> dict:
+    """Serialize a UrlStatsResponse into a JSON-safe dict for live WS push."""
+    return {
+        "summary": {
+            "total_clicks": stats.summary.total_clicks,
+            "unique_clicks": stats.summary.unique_clicks,
+            "clicks_today": stats.summary.clicks_today,
+            "clicks_this_week": stats.summary.clicks_this_week,
+            "avg_clicks_per_day": stats.summary.avg_clicks_per_day,
+            "total_countries": stats.summary.total_countries,
+            "total_cities": stats.summary.total_cities,
+            "last_clicked_at": stats.summary.last_clicked_at.isoformat() if stats.summary.last_clicked_at else None,
+        },
+        "by_country": stats.by_country,
+        "by_city": stats.by_city,
+        "by_device": stats.by_device,
+        "by_browser": stats.by_browser,
+        "by_os": stats.by_os,
+    }
+
+
 async def run_url_analytics(code: str, request: Request) -> None:
     """Background task — creates its own DB session, off the critical path."""
     try:
-        # Step 1: Visitor clicked the short link — running in the background,
-        # off the redirect's critical path.
-        # Step 2 parse_click_data() → Get IP, geo, device, browser, os, form current API request.
+        # Step 1: Visitor clicked the short link — this runs in the background,
+        # off the redirect's critical path. The redirect already returned to the browser.
+
+        # Step 2: parse_click_data() — extract IP, run geo lookup, parse User-Agent
+        # to get country, city, device type, browser, OS from the original request.
         click = await parse_click_data(code, request)
 
-        # Step 3: Persist the click to Postgres 
         async with AsyncSessionLocal() as db:
+            # Step 3: Persist the click to Postgres.
+            # save_analytics() upserts into unique_ips to detect first-time visitors,
+            # then inserts the full click row into analytics and commits.
             is_unique = await UrlRepository(db).save_analytics(click)
-        logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
+            logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
 
-        # Step 4: Build the payload that will be broadcast to live viewers
-        payload = json.dumps({
-            "code": click.code,
-            "clicked_at": click.clicked_at.isoformat(),
-            "country": click.country,
-            "city": click.city,
-            "device": click.device.value if click.device else None,
-            "browser": click.browser,
-            "os": click.os,
-            "is_unique": is_unique,
-        })
+            # Step 4: Re-query fresh all-time aggregated stats from Postgres in the same
+            # session (post-commit, so it sees the row we just inserted).
+            # This gives us accurate totals for every metric — no client-side math needed.
+            stats = await get_url_stats(code, db)
 
-        # Step 5: Publish to Redis channel "analytics:{code}"
-        #   all codes go to single shared Broadcaster subscription, Broadcaster receives the event and sends it to all viewers watching this code
-        # This publishes to the Redis channel analytics:abc123. Redis sends that message to the Broadcaster.
-        #   WebSocket viewer's in-memory queue (app/api/endpoints/ws.py)
-        await redis_client.publish(f"analytics:{code}", payload)
+        # Step 5: Serialize the full stats snapshot and publish to Redis channel "analytics:{code}".
+        # The Broadcaster holds a single pattern subscription PSUBSCRIBE("analytics:*") connection and fans
+        # the message out to every asyncio.Queue registered for this code — one per connected WebSocket.
+        # Each WS send_loop() picks it off the queue and pushes the snapshot to the browser.
+        # The browser replaces its state directly — no incrementing, no merging logic.
+        snapshot = json.dumps(build_live_snapshot(stats))
+        await redis_client.publish(f"analytics:{code}", snapshot)
         logger.info(f"Redis publish done for code: {code}")
     except Exception as e:
         logger.error(f"Analytics save failed for code {code}: {e}", exc_info=True)

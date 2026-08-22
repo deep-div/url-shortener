@@ -20,8 +20,8 @@ export function useAnalyticsSocket(code, onNewClick) {
         // Server sends "ping" frames to keep the connection alive — ignore them
         if (event.data === 'ping') return;
         try {
-          const click = JSON.parse(event.data);
-          onNewClickRef.current(click);
+          const snapshot = JSON.parse(event.data);
+          onNewClickRef.current(snapshot);
         } catch {
           // ignore malformed messages
         }

@@ -1,9 +1,12 @@
 import asyncio
+import json
 from contextlib import suppress
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.clients.broadcaster import broadcaster
+from app.clients.postgresql import AsyncSessionLocal
+from app.modules.url_analytics import get_url_stats, build_live_snapshot
 from app.core.logging import logger
 
 router = APIRouter()
@@ -15,6 +18,14 @@ PING_INTERVAL = 20  # seconds
 async def analytics_ws(websocket: WebSocket, code: str):
     await websocket.accept()
     logger.info(f"WebSocket connected for code: {code}")
+
+    # Send current snapshot immediately so the client is up-to-date on reconnect
+    try:
+        async with AsyncSessionLocal() as db:
+            stats = await get_url_stats(code, db)
+        await websocket.send_text(json.dumps(build_live_snapshot(stats)))
+    except Exception as e:
+        logger.warning(f"Could not send initial snapshot for code {code}: {e}")
 
     # It subscribes to the Broadcaster's in-memory queue. 
     # This creates an in-memory asyncio queue for that WebSocket and associates it with the code.
