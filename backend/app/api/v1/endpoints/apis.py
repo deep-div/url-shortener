@@ -5,7 +5,7 @@ from app.core.logging import logger
 from app.clients.postgresql import get_db
 from app.modules.url_shortener.security import validate_url
 from app.modules.url_shortener.shorten import run_url_shortener, run_resolve_code
-from app.modules.url_analytics import run_url_analytics, get_url_stats as fetch_url_stats
+from app.modules.url_analytics.analytics import run_url_analytics, get_url_stats as fetch_url_stats
 from app.modules.url_analytics.schema import UrlStatsResponse
 from app.api.v1.endpoints.utils import extract_code
 
