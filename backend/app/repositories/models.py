@@ -1,24 +1,11 @@
-from sqlalchemy import BigInteger, Column, ForeignKey, Index, String, Text, DateTime, UniqueConstraint
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.sql import func
 import datetime
+
 import pytz
+from sqlalchemy import BigInteger, Column, ForeignKey, Index, String, DateTime, UniqueConstraint
+
+from app.clients.postgresql import Base
 
 IST = pytz.timezone("Asia/Kolkata")
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-class Url(Base):
-    __tablename__ = "urls"
-
-    id         = Column(BigInteger, primary_key=True, autoincrement=True)
-    code       = Column(String, unique=True, nullable=False, index=True)
-    long_url   = Column(Text, unique=True, nullable=False, index=True)
-    short_url  = Column(Text, unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.datetime.now(IST))
 
 
 class Analytics(Base):

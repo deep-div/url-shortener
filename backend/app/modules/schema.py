@@ -9,11 +9,6 @@ class DeviceType(str, Enum):
     Desktop = "Desktop"
     Other = "Other"
 
-class ShortenResponse(BaseModel):
-    short_url: str
-    code: str
-
-
 # internal schema used by click capture pipeline
 class AnalyticsResponse(BaseModel):
     code: str
