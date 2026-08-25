@@ -15,20 +15,20 @@ REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
 BASE_URL = settings.BASE_URL.rstrip("/")
 
 ## Generate code 
-# 1. URL exists in Redis, TTL > 7 days → 0 DB, 1 Redis
-# 2. URL exists in Redis, TTL < 7 days → 0 DB, 2 Redis
-# 3. URL not in Redis, URL exists in DB → 1 DB, 2 Redis
-# 4. URL not in Redis, new URL, code generated successfully → 1 DB, 2 Redis
-# 5. URL not in Redis, new URL, code collision once → 2 DB, 2 Redis
-# 6. URL not in Redis, new URL, N code collisions → N+1 DB, 2 Redis
+# 1. URL exists in Redis, TTL > 7 days → 0 DB, 2 Redis commands, 1 Redis round trip
+# 2. URL exists in Redis, TTL < 7 days → 0 DB, 4 Redis commands, 2 Redis round trips
+# 3. URL not in Redis, URL exists in DB → 1 DB, 4 Redis commands, 2 Redis round trips
+# 4. URL not in Redis, new URL, code generated successfully → 1 DB, 2 Redis commands, 1 Redis round trip
+# 5. URL not in Redis, new URL, code collision once → 1 DB + 1 DB retry, 2 Redis commands, 1 Redis round trip
+# 6. URL not in Redis, new URL, N code collisions → N+1 DB attempts, 2 Redis commands, 1 Redis round trip
 
 
 ## Resolve code 
-# 1. Code exists in Redis, TTL > 7 days → 0 DB, 1 Redis
-# 2. Code exists in Redis, TTL < 7 days → 0 DB, 2 Redis
-# 3. Code not in Redis, code exists in DB → 1 DB, 2 Redis
-# 4. Code not in Redis, code does not exist in DB → 1 DB, 1 Redis
-# 5. Redis hit, but TTL = -1 → 0 DB, 1 Redis
+# 1. Code exists in Redis, TTL > 7 days → 0 DB, 2 Redis commands, 1 Redis round trip
+# 2. Code exists in Redis, TTL < 7 days → 0 DB, 4 Redis commands, 2 Redis round trips
+# 3. Code not in Redis, code exists in DB → 1 DB, 4 Redis commands, 2 Redis round trips
+# 4. Code not in Redis, code does not exist in DB → 1 DB, 2 Redis commands, 1 Redis round trip
+# 5. Redis hit, but TTL = -1 → 0 DB, 2 Redis commands, 1 Redis round trip
 
 class UrlShortener:
 
