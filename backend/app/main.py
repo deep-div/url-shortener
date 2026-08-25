@@ -1,11 +1,9 @@
-import asyncio
-from contextlib import asynccontextmanager, suppress
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.router import router
-from app.workers.code_pool import run_code_pool_worker
+from app.api.v1.router import router
 from app.clients.geoip import init_geoip
 from app.modules.broadcaster import broadcaster
 from app.core.logging import logger
@@ -16,12 +14,8 @@ async def lifespan(app: FastAPI):
     logger.info("Application starting up")
     init_geoip()
     await broadcaster.start()
-    task = asyncio.create_task(run_code_pool_worker())
     yield
     logger.info("Application shutting down")
-    task.cancel()
-    with suppress(asyncio.CancelledError):
-        await task
     await broadcaster.stop()
 
 

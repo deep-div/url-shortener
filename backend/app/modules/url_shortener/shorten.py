@@ -1,6 +1,4 @@
 import asyncio
-import secrets
-import string
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,18 +7,28 @@ from app.clients.redis import redis_client
 from app.core.config import settings
 from app.core.logging import logger
 from app.modules.schema import ShortenResponse
+from app.modules.url_shortener.generate_code import generate_code
 from app.repositories.url_repository import UrlRepository
-from app.workers.code_pool import POOL_KEY
 
-BASE62 = string.digits + string.ascii_letters
-CODE_LEN = 7
 REDIS_TTL = 60 * 60 * 24 * 30        # 30 days
 REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
 BASE_URL = settings.BASE_URL.rstrip("/")
 
-# Cached URL: 1 Redis read. Can't go lower.
-# New URL: 1 Redis read + 1 DB write. Can't go lower.
-# Fallback: 1 Redis read + 1 DB write per attempt. Same.
+## Generate code 
+# 1. URL exists in Redis, TTL > 7 days → 0 DB, 1 Redis
+# 2. URL exists in Redis, TTL < 7 days → 0 DB, 2 Redis
+# 3. URL not in Redis, URL exists in DB → 1 DB, 2 Redis
+# 4. URL not in Redis, new URL, code generated successfully → 1 DB, 2 Redis
+# 5. URL not in Redis, new URL, code collision once → 2 DB, 2 Redis
+# 6. URL not in Redis, new URL, N code collisions → N+1 DB, 2 Redis
+
+
+## Resolve code 
+# 1. Code exists in Redis, TTL > 7 days → 0 DB, 1 Redis
+# 2. Code exists in Redis, TTL < 7 days → 0 DB, 2 Redis
+# 3. Code not in Redis, code exists in DB → 1 DB, 2 Redis
+# 4. Code not in Redis, code does not exist in DB → 1 DB, 1 Redis
+# 5. Redis hit, but TTL = -1 → 0 DB, 1 Redis
 
 class UrlShortener:
 
@@ -39,37 +47,18 @@ class UrlShortener:
                 asyncio.create_task(_refresh_ttl(existing_code, url))
             return ShortenResponse(code=existing_code, short_url=f"{BASE_URL}/{existing_code}")
 
-        # Skip SELECT — attempt write directly, saves one DB round-trip for new URLs
-        fallback_reason = None
-        code = await redis_client.lpop(POOL_KEY)
-
-        if not code:
-            fallback_reason = "pool_empty"
-
-        if code:
+        attempt = 0
+        while True:
+            code = await generate_code()
             short_url = f"{BASE_URL}/{code}"
             try:
-                 # if url is there i update same url and return same code 
                 row, existed = await self.repo.save_or_get(code, url, short_url)
                 if existed:
                     return await self.cache_and_return(row)
+                break
             except IntegrityError:
-                fallback_reason = "pool_code_collision"
-                code = None
-
-        ## Fallback
-        if not code:
-            logger.warning(f"Fallback because {fallback_reason} for {url}")
-            while True:
-                code = self._random_code()
-                short_url = f"{BASE_URL}/{code}"
-                try:
-                    row, existed = await self.repo.save_or_get(code, url, short_url)
-                    if existed:
-                        return await self.cache_and_return(row)
-                    break
-                except IntegrityError:
-                    continue
+                attempt += 1
+                logger.error(f"Code collision on attempt {attempt}: code={code}, url={url}")
 
         pipe = redis_client.pipeline()
         pipe.set(f"url:{url}", code, ex=REDIS_TTL)
@@ -102,9 +91,6 @@ class UrlShortener:
 
         logger.warning(f"Code not found in cache or DB: {code}")
         return None
-
-    def _random_code(self) -> str:
-        return "".join(secrets.choice(BASE62) for _ in range(CODE_LEN))
 
 
 async def _set_cache(url: str, code: str) -> None:

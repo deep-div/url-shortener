@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from app.api.endpoints.apis import router as url_router
-from app.api.endpoints.health import router as health_router
-from app.api.endpoints.sse import router as sse_router
+from app.api.v1.endpoints.apis import router as url_router
+from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.sse import router as sse_router
 
 router = APIRouter()
 
