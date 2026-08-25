@@ -32,7 +32,7 @@ class JsonFormatter(logging.Formatter):
                 traceback.format_exception(*record.exc_info)
             )
 
-        return json.dumps(log_record)
+        return json.dumps(log_record, ensure_ascii=False)
 
 
 class _CappedFileHandler(logging.FileHandler):
