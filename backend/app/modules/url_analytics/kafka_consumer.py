@@ -16,7 +16,7 @@ async def start_consumer() -> None:
         **kafka_client,
         group_id="url-analytics-consumer",
         auto_offset_reset="earliest",
-        enable_auto_commit=False,
+        enable_auto_commit=False,  # I will commit offsets myself kafka cant commit it 
         value_deserializer=lambda v: json.loads(v.decode()),
     )
     await consumer.start()
