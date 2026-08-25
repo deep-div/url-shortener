@@ -175,4 +175,5 @@ async def run_url_analytics_batch(payloads: list[dict]) -> None:
 
     except Exception as e:
         logger.error(f"Batch analytics failed: {e}", exc_info=True)
+        raise
 

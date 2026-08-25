@@ -45,10 +45,23 @@ async def start_consumer() -> None:
             if buffer and (time_up or batch_full):
                 reason = "batch_full" if batch_full else "time_up"
                 logger.info(f"Flushing {len(buffer)} click events — reason: {reason}")
-                await run_url_analytics_batch(buffer)
-                await consumer.commit()
-                buffer = []
-                deadline = None
+                try:
+                    await run_url_analytics_batch(buffer)
+                    await consumer.commit()
+                except Exception as e:
+                    offsets = {
+                        f"partition_{tp.partition}": consumer.position(tp)
+                        for tp in consumer.assignment()
+                    }
+                    logger.error(
+                        f"Batch failed — skipping {len(buffer)} messages. "
+                        f"Offsets at time of failure: {offsets}. Error: {e}",
+                        exc_info=True,
+                    )
+                    await consumer.commit()
+                finally:
+                    buffer = []
+                    deadline = None
 
     finally:
         await consumer.stop()
