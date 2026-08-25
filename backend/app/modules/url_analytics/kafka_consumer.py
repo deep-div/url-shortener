@@ -4,24 +4,10 @@ from aiokafka import AIOKafkaConsumer
 from app.clients.kafka import kafka_client
 from app.core.config import settings
 from app.core.logging import logger
-from app.modules.url_analytics.analytics import run_url_analytics
+from app.modules.url_analytics.analytics import run_url_analytics_batch
 
-
-class _ClickClient:
-    def __init__(self, host: str):
-        self.host = host
-
-
-class ClickRequest:
-    """Reconstructs just enough of a FastAPI Request for parse_click_data."""
-
-    def __init__(self, ipv4: str, ip_from_headers: str, user_agent: str):
-        self.query_params = {"ipv4": ipv4}
-        self.headers = {
-            "x-forwarded-for": ip_from_headers,
-            "user-agent": user_agent,
-        }
-        self.client = _ClickClient(host=ip_from_headers)
+BATCH_SIZE = 100
+BATCH_TIMEOUT_MS = 5000
 
 
 async def start_consumer() -> None:
@@ -36,18 +22,18 @@ async def start_consumer() -> None:
     logger.info("Kafka consumer started")
 
     try:
-        async for message in consumer:
-            payload = message.value
-            try:
-                code = payload["code"]
-                fake_request = ClickRequest(
-                    ipv4=payload.get("ipv4", ""),
-                    ip_from_headers=payload.get("ip_from_headers", ""),
-                    user_agent=payload.get("user_agent", ""),
-                )
-                await run_url_analytics(code, fake_request)
-            except Exception as e:
-                logger.error(f"Failed to process click event: {e}", exc_info=True)
+        while True:
+            # blocks until BATCH_SIZE messages arrive OR BATCH_TIMEOUT_MS elapses
+            records = await consumer.getmany(
+                timeout_ms=BATCH_TIMEOUT_MS,
+                max_records=BATCH_SIZE,
+            )
+            if not records:
+                continue
+
+            batch = [msg.value for msgs in records.values() for msg in msgs]
+            logger.info(f"Processing batch of {len(batch)} click events")
+            await run_url_analytics_batch(batch)
     finally:
         await consumer.stop()
         logger.info("Kafka consumer stopped")

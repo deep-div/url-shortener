@@ -35,28 +35,36 @@ class UrlRepository:
         row = result.scalar_one()
         return row, row.code != code
 
-    async def save_analytics(self, click) -> bool:
-        stmt = (
+    async def save_analytics_batch(self, clicks: list) -> list[bool]:
+        # Bulk upsert unique IPs — returns only rows that were actually inserted (new IPs)
+        ip_stmt = (
             pg_insert(UniqueIp)
-            .values(code=click.code, ip=click.ip)
+            .values([{"code": c.code, "ip": c.ip} for c in clicks])
             .on_conflict_do_nothing(constraint="unique_contraint_code_ip")
-            .returning(UniqueIp.id)
+            .returning(UniqueIp.code, UniqueIp.ip)
         )
-        result = await self.session.execute(stmt)
-        is_unique = result.scalar_one_or_none() is not None
+        result = await self.session.execute(ip_stmt)
+        newly_unique = {(r.code, r.ip) for r in result.all()}
 
-        self.session.add(Analytics(
-            code=click.code,
-            clicked_at=click.clicked_at,
-            ip=click.ip,
-            country=click.country,
-            city=click.city,
-            device=click.device,
-            browser=click.browser,
-            os=click.os,
-        ))
+        # Bulk insert all analytics rows in one statement
+        await self.session.execute(
+            pg_insert(Analytics),
+            [
+                {
+                    "code": c.code,
+                    "clicked_at": c.clicked_at,
+                    "ip": c.ip,
+                    "country": c.country,
+                    "city": c.city,
+                    "device": c.device,
+                    "browser": c.browser,
+                    "os": c.os,
+                }
+                for c in clicks
+            ],
+        )
         await self.session.commit()
-        return is_unique
+        return [(c.code, c.ip) in newly_unique for c in clicks]
 
     #  Analytics — read (per URL)
 

@@ -1,3 +1,5 @@
+import asyncio
+from types import SimpleNamespace
 import datetime
 import ipaddress
 import json
@@ -28,7 +30,13 @@ def _is_public_ip(ip: str) -> bool:
     except ValueError:
         return False
 
-
+def _make_request(payload: dict):
+    ip = payload.get("ip_from_headers", "")
+    return SimpleNamespace(
+        query_params={"ipv4": payload.get("ipv4", "")},
+        headers={"x-forwarded-for": ip, "user-agent": payload.get("user_agent", "")},
+        client=SimpleNamespace(host=ip),
+    )
 
 def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
     grouped: dict[str, dict[int, int]] = {}
@@ -137,39 +145,35 @@ def build_live_snapshot(stats: UrlStatsResponse) -> dict:
     }
 
 
-async def run_url_analytics(code: str, request: Request) -> None:
-    """Background task — creates its own DB session, off the critical path."""
+async def run_url_analytics_batch(payloads: list[dict]) -> None:
+    """Process a batch of click events — one bulk DB insert instead of N individual ones."""
     try:
-        # Step 1: Visitor clicked the short link — this runs in the background,
-        # off the redirect's critical path. The redirect already returned to the browser.
-
-        # Step 2: parse_click_data() — extract IP, run geo lookup, parse User-Agent
-        # to get country, city, device type, browser, OS from the original request.
-        click = await parse_click_data(code, request)
+        clicks = await asyncio.gather(*[
+            parse_click_data(p["code"], _make_request(p))
+            for p in payloads
+        ])
 
         async with AsyncSessionLocal() as db:
-            # Step 3: Cold start — before saving this click, atomically claim the right
-            # to populate Redis from Postgres. Done pre-save so populate loads the
-            # pre-click baseline. All concurrent losers wait until populate finishes.
-            if await try_claim_cold_start(code):
-                stats = await get_url_stats(code, db)
-                await populate_from_db(code, stats)
+            repo = UrlRepository(db)
 
-            # Step 4: Persist the click to Postgres.
-            # save_analytics() upserts into unique_ips to detect first-time visitors,
-            # then inserts the full click row into analytics and commits.
-            is_unique = await UrlRepository(db).save_analytics(click)
-            logger.info(f"Click saved for code: {code} | unique={is_unique} | country={click.country} | device={click.device}")
+            # Cold start check per unique code in this batch
+            for code in {c.code for c in clicks}:
+                if await try_claim_cold_start(code):
+                    stats = await get_url_stats(code, db)
+                    await populate_from_db(code, stats)
 
-        # Step 5: Increment Redis counters — total_clicks, by_country, by_device, etc.
-        # Always runs — populate_from_db loaded pre-click baseline so +1 here is correct.
-        await increment_counters(code, click, is_unique)
+            unique_flags = await repo.save_analytics_batch(list(clicks))
+            logger.info(f"Batch inserted {len(clicks)} clicks")
 
-        # Step 6: Read the updated snapshot from Redis and publish to channel "analytics:{code}".
-        # The Broadcaster fans the message out to every asyncio.Queue — one per connected SSE client.
-        # The browser replaces its state directly — no incrementing, no merging logic.
-        snapshot = json.dumps(await get_snapshot(code))
-        await redis_client.publish(f"analytics:{code}", snapshot)
-        logger.info(f"Redis publish done for code: {code}")
+        # Increment Redis counters and publish snapshots per click
+        for click, is_unique in zip(clicks, unique_flags):
+            await increment_counters(click.code, click, is_unique)
+
+        for code in {c.code for c in clicks}:
+            snapshot = json.dumps(await get_snapshot(code))
+            await redis_client.publish(f"analytics:{code}", snapshot)
+            logger.info(f"Redis publish done for code: {code}")
+
     except Exception as e:
-        logger.error(f"Analytics save failed for code {code}: {e}", exc_info=True)
+        logger.error(f"Batch analytics failed: {e}", exc_info=True)
+
