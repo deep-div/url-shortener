@@ -2,7 +2,6 @@ import asyncio
 from types import SimpleNamespace
 import datetime
 import ipaddress
-import json
 import pytz
 
 from fastapi import HTTPException, Request
@@ -14,8 +13,8 @@ from app.modules.url_analytics.schema import (
 )
 from app.modules.url_analytics.repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
-from app.clients.redis import redis_client
-from app.modules.url_analytics.counters_redis import try_claim_cold_start, populate_from_db, increment_counters, get_snapshot
+# from app.clients.redis import redis_client
+# from app.modules.url_analytics.counters_redis import try_claim_cold_start, populate_from_db, increment_counters, get_snapshot
 from app.clients.geoip import get_location
 
 import user_agents
@@ -156,23 +155,23 @@ async def run_url_analytics_batch(payloads: list[dict]) -> None:
         async with AsyncSessionLocal() as db:
             repo = UrlRepository(db)
 
-            # Cold start check per unique code in this batch
-            for code in {c.code for c in clicks}:
-                if await try_claim_cold_start(code):
-                    stats = await get_url_stats(code, db)
-                    await populate_from_db(code, stats)
+            # # Cold start check per unique code in this batch
+            # for code in {c.code for c in clicks}:
+            #     if await try_claim_cold_start(code):
+            #         stats = await get_url_stats(code, db)
+            #         await populate_from_db(code, stats)
 
-            unique_flags = await repo.save_analytics_batch(list(clicks))
+            await repo.save_analytics_batch(list(clicks))
             logger.info(f"Batch inserted {len(clicks)} clicks")
 
-        # Increment Redis counters and publish snapshots per click
-        for click, is_unique in zip(clicks, unique_flags):
-            await increment_counters(click.code, click, is_unique)
+        # # Increment Redis counters and publish snapshots per click
+        # for click, is_unique in zip(clicks, unique_flags):
+        #     await increment_counters(click.code, click, is_unique)
 
-        for code in {c.code for c in clicks}:
-            snapshot = json.dumps(await get_snapshot(code))
-            await redis_client.publish(f"analytics:{code}", snapshot)
-            logger.info(f"Redis publish done for code: {code}")
+        # for code in {c.code for c in clicks}:
+        #     snapshot = json.dumps(await get_snapshot(code))
+        #     await redis_client.publish(f"analytics:{code}", snapshot)
+        #     logger.info(f"Redis publish done for code: {code}")
 
     except Exception as e:
         logger.error(f"Batch analytics failed: {e}", exc_info=True)
