@@ -1,10 +1,12 @@
 import asyncio
+import datetime
 import json
 from aiokafka import AIOKafkaConsumer
 from app.clients.kafka import kafka_client
 from app.core.config import settings
 from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_batch
+from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
 
 BATCH_SIZE = 100
 BATCH_TIMEOUT_SECS = 5
@@ -12,7 +14,7 @@ BATCH_TIMEOUT_SECS = 5
 
 async def start_consumer() -> None:
     consumer = AIOKafkaConsumer(
-        settings.KAFKA_TOPIC,
+        settings.KAFKA_CLICKS_TOPIC,
         **kafka_client,
         group_id="url-analytics-consumer",
         auto_offset_reset="earliest",
@@ -54,10 +56,22 @@ async def start_consumer() -> None:
                         for tp in consumer.assignment()
                     }
                     logger.error(
-                        f"Batch failed — skipping {len(buffer)} messages. "
-                        f"Offsets at time of failure: {offsets}. Error: {e}",
+                        f"Batch failed — pushing {len(buffer)} messages to DLQ. "
+                        f"Offsets: {offsets}. Error: {e}",
                         exc_info=True,
                     )
+                    dlq_messages = [
+                        {
+                            "source_topic": settings.KAFKA_CLICKS_TOPIC,
+                            "consumer_group": "url-analytics-consumer",
+                            "partitions": offsets,
+                            "failed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                            "error": str(e),
+                            "payload": payload,
+                        }
+                        for payload in buffer
+                    ]
+                    await send_to_dlq(dlq_messages)
                     await consumer.commit()
                 finally:
                     buffer = []

@@ -44,5 +44,5 @@ async def produce_click_event(code: str, request: Request) -> None:
         "user_agent": request.headers.get("user-agent", ""),
     }
 
-    await _producer.send_and_wait(settings.KAFKA_TOPIC, payload)
+    await _producer.send_and_wait(settings.KAFKA_CLICKS_TOPIC, payload)
     logger.info(f"Click event produced for code: {code}")

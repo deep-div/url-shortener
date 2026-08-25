@@ -26,7 +26,8 @@ class Settings(BaseSettings):
     KAFKA_PORT: int
     KAFKA_USERNAME: str
     KAFKA_PASSWORD: str
-    KAFKA_TOPIC: str
+    KAFKA_CLICKS_TOPIC: str
+    KAFKA_DLQ_TOPIC: str
     KAFKA_CA_CERT: str
 
     class Config:
