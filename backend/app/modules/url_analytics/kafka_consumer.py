@@ -53,5 +53,5 @@ async def start_consumer() -> None:
         logger.info("Kafka consumer stopped")
 
 
-if __name__ == "__main__":
-    asyncio.run(start_consumer())
+# if __name__ == "__main__":
+#     asyncio.run(start_consumer())
