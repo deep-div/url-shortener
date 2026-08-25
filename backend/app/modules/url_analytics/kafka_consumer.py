@@ -24,11 +24,10 @@ async def start_consumer() -> None:
 
     try:
         buffer = []
-        deadline = asyncio.get_event_loop().time() + BATCH_TIMEOUT_SECS
+        deadline = None  # starts only when first message arrives
 
         while True:
-            now = asyncio.get_event_loop().time()
-            remaining_ms = max(0, int((deadline - now) * 1000))
+            remaining_ms = max(0, int((deadline - asyncio.get_event_loop().time()) * 1000)) if deadline else BATCH_TIMEOUT_SECS * 1000
 
             records = await consumer.getmany(
                 timeout_ms=remaining_ms,
@@ -37,7 +36,10 @@ async def start_consumer() -> None:
             for msgs in records.values():
                 buffer.extend(msg.value for msg in msgs)
 
-            time_up = asyncio.get_event_loop().time() >= deadline
+            if buffer and deadline is None:
+                deadline = asyncio.get_event_loop().time() + BATCH_TIMEOUT_SECS
+
+            time_up = deadline is not None and asyncio.get_event_loop().time() >= deadline
             batch_full = len(buffer) >= BATCH_SIZE
 
             if buffer and (time_up or batch_full):
@@ -46,9 +48,7 @@ async def start_consumer() -> None:
                 await run_url_analytics_batch(buffer)
                 await consumer.commit()
                 buffer = []
-                deadline = asyncio.get_event_loop().time() + BATCH_TIMEOUT_SECS
-            elif time_up:
-                deadline = asyncio.get_event_loop().time() + BATCH_TIMEOUT_SECS
+                deadline = None
 
     finally:
         await consumer.stop()
