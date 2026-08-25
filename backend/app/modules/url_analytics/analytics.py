@@ -6,14 +6,14 @@ import pytz
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.schema import (
+from app.modules.url_analytics.schema import (
     AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, ClicksByHourItem,
     LinkInfo, SummaryInfo, DeviceType,
 )
-from app.repositories.url_repository import UrlRepository
+from app.modules.url_analytics.repository import UrlRepository
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
-from app.modules.counters_redis import try_claim_cold_start, populate_from_db, increment_counters, get_snapshot
+from app.modules.url_analytics.counters_redis import try_claim_cold_start, populate_from_db, increment_counters, get_snapshot
 from app.clients.geoip import get_location
 
 import user_agents

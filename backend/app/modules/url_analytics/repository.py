@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date, case, extract
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from app.repositories.models import Analytics, UniqueIp, Url
+from app.modules.url_analytics.models import Analytics, UniqueIp, Url
 import datetime
 import pytz
 

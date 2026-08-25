@@ -5,7 +5,8 @@ from app.core.logging import logger
 from app.clients.postgresql import get_db
 from app.modules.url_shortener.security import validate_url
 from app.modules.url_shortener.shorten import run_url_shortener, run_resolve_code
-from app.modules.url_analytics.analytics import run_url_analytics, get_url_stats as fetch_url_stats
+from app.modules.url_analytics.analytics import get_url_stats as fetch_url_stats
+from app.modules.url_shortener.kafka_producer import produce_click_event
 from app.modules.url_analytics.schema import UrlStatsResponse
 from app.api.v1.endpoints.utils import extract_code
 
@@ -23,18 +24,13 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
 
 
 @router.get("/v1/{code}")
-async def resolve_url(code: str, db: AsyncSession = Depends(get_db)):
+async def resolve_url(code: str, request: Request, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     long_url = await run_resolve_code(code, db)
     if not long_url:
         logger.warning(f"Short code not found: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
+    background_tasks.add_task(produce_click_event, code, request)
     return {"long_url": long_url}
-
-
-@router.get("/v1/record/{code}")
-async def record_click(code: str, request: Request, background_tasks: BackgroundTasks):
-    background_tasks.add_task(run_url_analytics, code, request)
-    return {}
 
 
 @router.get("/v1/analytics/{code}", response_model=UrlStatsResponse)

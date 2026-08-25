@@ -21,6 +21,14 @@ class Settings(BaseSettings):
     LOG_LEVEL: str
     ENVIRONMENT: str
 
+    KAFKA_SERVICE_URI: str
+    KAFKA_HOST: str
+    KAFKA_PORT: int
+    KAFKA_USERNAME: str
+    KAFKA_PASSWORD: str
+    KAFKA_TOPIC: str
+    KAFKA_CA_CERT: str
+
     class Config:
         env_file = ".env"
 
