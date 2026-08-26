@@ -1,4 +1,5 @@
 import asyncio
+import json
 from types import SimpleNamespace
 import datetime
 import ipaddress
@@ -12,7 +13,7 @@ from app.modules.url_analytics.schema import (
     LinkInfo, SummaryInfo, DeviceType,
 )
 from app.modules.url_analytics.repository import UrlRepository
-from app.modules.url_analytics.redis_counter import increment_click, seed_counters_if_missing
+from app.modules.url_analytics.redis_counter import increment_click, seed_counters_if_missing, get_live_snapshot
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
 from app.clients.geoip import get_location
@@ -181,10 +182,8 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
         ])
 
         for c in clicks:
-            await redis_client.publish(
-                f"updates:{c.code}",
-                f'{{"code":"{c.code}","country":"{c.country or "Others"}","city":"{c.city or "Others"}","device":"{c.device.value if c.device else "Others"}","browser":"{c.browser or "Others"}","os":"{c.os or "Others"}","clicked_at":"{c.clicked_at.isoformat()}"}}'
-            )
+            payload = await get_live_snapshot(c.code)
+            await redis_client.publish(f"updates:{c.code}", json.dumps(payload))
 
         logger.info(f"Redis: incremented counters and published {len(clicks)} click events")
 

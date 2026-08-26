@@ -137,15 +137,41 @@ async def get_live_stats(code: str) -> dict:
         clicks_by_day,
     ) = await pipe.execute()
 
+    by_country = {k: int(v) for k, v in by_country.items()}
+    by_city = {k: int(v) for k, v in by_city.items()}
+    by_device = {k: int(v) for k, v in by_device.items()}
+    by_browser = {k: int(v) for k, v in by_browser.items()}
+    by_os = {k: int(v) for k, v in by_os.items()}
+
     return {
         "total_clicks":     int(total_clicks or 0),
         "clicks_today":     int(clicks_today or 0),
         "clicks_this_week": int(clicks_this_week or 0),
         "last_clicked_at":  last_clicked_at,
-        "by_country":       {k: int(v) for k, v in by_country.items()},
-        "by_city":          {k: int(v) for k, v in by_city.items()},
-        "by_device":        {k: int(v) for k, v in by_device.items()},
-        "by_browser":       {k: int(v) for k, v in by_browser.items()},
-        "by_os":            {k: int(v) for k, v in by_os.items()},
+        "by_country":       by_country,
+        "by_city":          by_city,
+        "by_device":        by_device,
+        "by_browser":       by_browser,
+        "by_os":            by_os,
         "clicks_by_day":    {k: int(v) for k, v in clicks_by_day.items()},
+    }
+
+
+async def get_live_snapshot(code: str) -> dict:
+    """Live-update payload shape published over SSE — summary + breakdowns."""
+    stats = await get_live_stats(code)
+    return {
+        "summary": {
+            "total_clicks": stats["total_clicks"],
+            "clicks_today": stats["clicks_today"],
+            "clicks_this_week": stats["clicks_this_week"],
+            "last_clicked_at": stats["last_clicked_at"],
+            "total_countries": len(stats["by_country"]),
+            "total_cities": len(stats["by_city"]),
+        },
+        "by_country": stats["by_country"],
+        "by_city": stats["by_city"],
+        "by_device": stats["by_device"],
+        "by_browser": stats["by_browser"],
+        "by_os": stats["by_os"],
     }

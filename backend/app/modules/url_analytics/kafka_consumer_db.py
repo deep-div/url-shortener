@@ -22,7 +22,7 @@ async def start_consumer() -> None:
         value_deserializer=lambda v: json.loads(v.decode()),
     )
     await consumer.start()
-    logger.info("Kafka consumer started")
+    logger.info("Kafka DB consumer started")
 
     try:
         buffer = []

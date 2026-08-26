@@ -42,6 +42,22 @@ function ExternalLinkIcon() {
   );
 }
 
+async function openWithClientIp(url) {
+  const win = window.open('/redirect.html', '_blank');
+  if (win) win.opener = null;
+  let ip = '';
+  try {
+    const res = await fetch('https://api.ipify.org/?format=json');
+    const data = await res.json();
+    ip = data.ip || '';
+  } catch {
+    // ipify unreachable — fall back to no ipv4 param, backend still uses header-based IP
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  const finalUrl = ip ? `${url}${separator}ipv4=${encodeURIComponent(ip)}` : url;
+  if (win) win.location = finalUrl;
+}
+
 function getRangeDates(value) {
   const today = new Date();
   const fmt = (d) => d.toISOString().split('T')[0];
@@ -81,7 +97,7 @@ export default function AnalyticsPage() {
       if (!prev) return prev;
       return {
         ...prev,
-        summary: snapshot.summary,
+        summary: { ...prev.summary, ...snapshot.summary },
         by_country: snapshot.by_country,
         by_city: snapshot.by_city,
         by_device: snapshot.by_device,
@@ -168,7 +184,13 @@ export default function AnalyticsPage() {
         <div className="dash-hero">
           <div className="dash-hero-left">
             <div className="dash-short-url">
-              <a href={link.short_url} target="_blank" rel="noopener noreferrer" className="dash-short-link">
+              <a
+                href={link.short_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dash-short-link"
+                onClick={(e) => { e.preventDefault(); openWithClientIp(link.short_url); }}
+              >
                 {link.short_url}
                 <ExternalLinkIcon />
               </a>
