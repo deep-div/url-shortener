@@ -42,20 +42,10 @@ function ExternalLinkIcon() {
   );
 }
 
-async function openWithClientIp(url) {
-  const win = window.open('/redirect.html', '_blank');
-  if (win) win.opener = null;
-  let ip = '';
-  try {
-    const res = await fetch('https://api.ipify.org/?format=json');
-    const data = await res.json();
-    ip = data.ip || '';
-  } catch {
-    // ipify unreachable — fall back to no ipv4 param, backend still uses header-based IP
-  }
+function withClientIp(url, ip) {
+  if (!ip) return url;
   const separator = url.includes('?') ? '&' : '?';
-  const finalUrl = ip ? `${url}${separator}ipv4=${encodeURIComponent(ip)}` : url;
-  if (win) win.location = finalUrl;
+  return `${url}${separator}ipv4=${encodeURIComponent(ip)}`;
 }
 
 function getRangeDates(value) {
@@ -77,7 +67,15 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [range, setRange] = useState('all');
+  const [clientIp, setClientIp] = useState('');
   const { copied, copy } = useClipboard();
+
+  useEffect(() => {
+    fetch('https://api.ipify.org/?format=json')
+      .then((res) => res.json())
+      .then((d) => setClientIp(d.ip || ''))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -185,11 +183,10 @@ export default function AnalyticsPage() {
           <div className="dash-hero-left">
             <div className="dash-short-url">
               <a
-                href={link.short_url}
+                href={withClientIp(link.short_url, clientIp)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="dash-short-link"
-                onClick={(e) => { e.preventDefault(); openWithClientIp(link.short_url); }}
               >
                 {link.short_url}
                 <ExternalLinkIcon />
