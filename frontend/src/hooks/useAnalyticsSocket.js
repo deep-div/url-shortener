@@ -10,14 +10,14 @@ export function useAnalyticsSocket(code, onSnapshot) {
     const url = `/v1/analytics/live/${code}`;
     const es = new EventSource(url);
 
-    es.onmessage = (event) => {
+    es.addEventListener('click', (event) => {
       try {
         const snapshot = JSON.parse(event.data);
         onSnapshotRef.current(snapshot);
       } catch {
         // ignore malformed messages
       }
-    };
+    });
 
     es.onerror = () => {
       // EventSource reconnects automatically — no manual backoff needed
