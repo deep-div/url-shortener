@@ -52,7 +52,7 @@ class UrlRepository:
         return [(c.code, c.ip) in newly_unique for c in clicks]
 
     #  Analytics — read (per URL)
-    # 3 DB reads queries
+    # 3 DB reads queries analytics
     
     def _date_filters(self, code: str, from_date, to_date):
         filters = [Analytics.code == code]

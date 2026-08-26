@@ -12,7 +12,9 @@ from app.modules.url_analytics.schema import (
     LinkInfo, SummaryInfo, DeviceType,
 )
 from app.modules.url_analytics.repository import UrlRepository
+from app.modules.url_analytics.redis_counter import increment_click
 from app.clients.postgresql import AsyncSessionLocal
+from app.clients.redis import redis_client
 from app.clients.geoip import get_location
 
 import user_agents
@@ -84,7 +86,6 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         os=os_name,
     )
 
-## 3 Db read queries
 async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
@@ -143,7 +144,39 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
         by_os=sort_desc(by_os),
     )
 
-## 2 DB writes
+async def run_url_analytics_redis(payloads: list[dict]) -> None:
+    try:
+        clicks = await asyncio.gather(*[
+            parse_click_data(p["code"], _make_request(p))
+            for p in payloads
+        ])
+
+        await asyncio.gather(*[
+            increment_click(
+                code=c.code,
+                clicked_at=c.clicked_at,
+                country=c.country,
+                city=c.city,
+                device=c.device.value if c.device else None,
+                browser=c.browser,
+                os=c.os,
+            )
+            for c in clicks
+        ])
+
+        for c in clicks:
+            await redis_client.publish(
+                f"updates:{c.code}",
+                f'{{"code":"{c.code}","country":"{c.country or "Others"}","city":"{c.city or "Others"}","device":"{c.device.value if c.device else "Others"}","browser":"{c.browser or "Others"}","os":"{c.os or "Others"}","clicked_at":"{c.clicked_at.isoformat()}"}}'
+            )
+
+        logger.info(f"Redis: incremented counters and published {len(clicks)} click events")
+
+    except Exception as e:
+        logger.error(f"Redis analytics failed: {e}", exc_info=True)
+        raise
+
+
 async def run_url_analytics_batch(payloads: list[dict]) -> None:
     """Process a batch of click events — one bulk DB insert instead of N individual ones."""
     try:
