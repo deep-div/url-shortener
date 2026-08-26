@@ -9,10 +9,11 @@ Port 8000 stays private inside the container, never visible to the outside world
 
 Client (browser) (REACT)
       │
-      │  POST /shorten        → Nginx proxies → backend :8000
-      │  GET /analytics/abc   → Nginx proxies → backend :8000
-      │  GET /abc123          → Nginx proxies → backend :8000 (redirect)
-      │  GET /                → Nginx serves dist/index.html
+      │  POST /v1/shorten             → Nginx proxies → backend :8000
+      │  GET /v1/analytics/abc        → Nginx proxies → backend :8000
+      │  GET /v1/analytics/live/abc   → Nginx proxies → backend :8000 (SSE)
+      │  GET /abc123                  → Nginx proxies → backend :8000 (redirect)
+      │  GET /                        → Nginx serves dist/index.html
       ▼
    Port 80 (only public port)
 

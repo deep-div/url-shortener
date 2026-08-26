@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from app.clients.redis import redis_client
 from app.core.logging import logger
+from app.modules.url_shortener.security import extract_code
 
 router = APIRouter()
 
@@ -28,6 +29,7 @@ async def _event_stream(code: str):
 
 @router.get("/v1/analytics/live/{code}")
 async def live_analytics(code: str):
+    code = extract_code(code)
     return StreamingResponse(
         _event_stream(code),
         media_type="text/event-stream",

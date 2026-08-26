@@ -7,7 +7,7 @@ export function useAnalyticsSocket(code, onSnapshot) {
   useEffect(() => {
     if (!code) return;
 
-    const url = `/v1/sse/analytics/${code}`;
+    const url = `/v1/analytics/live/${code}`;
     const es = new EventSource(url);
 
     es.onmessage = (event) => {
