@@ -20,6 +20,7 @@ class UrlRepository:
         return result.scalar_one_or_none()
 
     async def save_analytics_batch(self, clicks: list) -> list[bool]:
+        ## 2 SQL write queries
         # Bulk upsert unique IPs — returns only rows that were actually inserted (new IPs)
         ip_stmt = (
             pg_insert(UniqueIp)
