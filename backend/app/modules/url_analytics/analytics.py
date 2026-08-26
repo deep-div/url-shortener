@@ -35,12 +35,6 @@ def _make_request(payload: dict):
         client=SimpleNamespace(host=ip),
     )
 
-def _group_hours_by_date(rows: list[dict]) -> list[ClicksByHourItem]:
-    grouped: dict[str, dict[int, int]] = {}
-    for r in rows:
-        grouped.setdefault(r["date"], {})[r["hour"]] = r["clicks"]
-    return [ClicksByHourItem(date=date, hours=hours) for date, hours in sorted(grouped.items())]
-
 
 async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     ipv4 = request.query_params.get("ipv4", "").strip()
@@ -90,18 +84,47 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         os=os_name,
     )
 
-
+## 3 Db read queries
 async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
     if not url_row:
         logger.warning(f"Analytics requested for unknown code: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
-    summary_data = await repo.get_summary(code, url_row.created_at)
-    by_country = await repo.get_breakdown(code, "country", from_date, to_date)
-    by_city = await repo.get_breakdown(code, "city", from_date, to_date)
+
+    summary_data, rows = await asyncio.gather(
+        repo.get_summary(code, url_row.created_at),
+        repo.get_raw_clicks(code, from_date, to_date),
+    )
+
+    by_country: dict[str, int] = {}
+    by_city: dict[str, int] = {}
+    by_device: dict[str, int] = {}
+    by_browser: dict[str, int] = {}
+    by_os: dict[str, int] = {}
+    clicks_by_day: dict[str, int] = {}
+    clicks_by_hour: dict[str, dict[int, int]] = {}
+    peak_hours: dict[int, int] = {}
+
+    for r in rows:
+        date, hour = r["date"], r["hour"]
+
+        clicks_by_day[date] = clicks_by_day.get(date, 0) + 1
+        clicks_by_hour.setdefault(date, {})
+        clicks_by_hour[date][hour] = clicks_by_hour[date].get(hour, 0) + 1
+        peak_hours[hour] = peak_hours.get(hour, 0) + 1
+
+        by_country[r["country"]] = by_country.get(r["country"], 0) + 1
+        by_city[r["city"]] = by_city.get(r["city"], 0) + 1
+        by_device[r["device"]] = by_device.get(r["device"], 0) + 1
+        by_browser[r["browser"]] = by_browser.get(r["browser"], 0) + 1
+        by_os[r["os"]] = by_os.get(r["os"], 0) + 1
+
     summary_data["total_countries"] = len(by_country)
     summary_data["total_cities"] = len(by_city)
+
+    sort_desc = lambda d: dict(sorted(d.items(), key=lambda x: -x[1]))
+
     return UrlStatsResponse(
         link=LinkInfo(
             code=url_row.code,
@@ -110,17 +133,17 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
             created_at=url_row.created_at,
         ),
         summary=SummaryInfo(**summary_data),
-        clicks_by_day=[ClicksByDayItem(**r) for r in await repo.get_clicks_by_day(code, from_date, to_date)],
-        clicks_by_hour=_group_hours_by_date(await repo.get_clicks_by_hour(code, from_date, to_date)),
-        peak_hours=await repo.get_peak_hours(code, from_date, to_date),
-        by_country=by_country,
-        by_city=by_city,
-        by_device=await repo.get_breakdown(code, "device", from_date, to_date),
-        by_browser=await repo.get_breakdown(code, "browser", from_date, to_date),
-        by_os=await repo.get_breakdown(code, "os", from_date, to_date),
+        clicks_by_day=[ClicksByDayItem(date=d, clicks=c) for d, c in sorted(clicks_by_day.items())],
+        clicks_by_hour=[ClicksByHourItem(date=d, hours=h) for d, h in sorted(clicks_by_hour.items())],
+        peak_hours=peak_hours,
+        by_country=sort_desc(by_country),
+        by_city=sort_desc(by_city),
+        by_device=sort_desc(by_device),
+        by_browser=sort_desc(by_browser),
+        by_os=sort_desc(by_os),
     )
 
-
+## 2 DB writes
 async def run_url_analytics_batch(payloads: list[dict]) -> None:
     """Process a batch of click events — one bulk DB insert instead of N individual ones."""
     try:

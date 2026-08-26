@@ -24,16 +24,13 @@ class AnalyticsResponse(BaseModel):
         from_attributes = True
 
 
-# ---------------------------------------------------------------------------
 # Analytics Read Schemas for Dashboard
-# ---------------------------------------------------------------------------
 
 class LinkInfo(BaseModel):
     code: str
     short_url: str
     long_url: str
     created_at: datetime.datetime
-
 
 class SummaryInfo(BaseModel):
     total_clicks: int
@@ -45,16 +42,13 @@ class SummaryInfo(BaseModel):
     total_cities: int
     last_clicked_at: datetime.datetime | None
 
-
 class ClicksByDayItem(BaseModel):
     date: str
     clicks: int
 
-
 class ClicksByHourItem(BaseModel):
     date: str
     hours: dict[int, int]  # hour -> clicks
-
 
 class UrlStatsResponse(BaseModel):
     link: LinkInfo

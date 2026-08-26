@@ -52,7 +52,8 @@ class UrlRepository:
         return [(c.code, c.ip) in newly_unique for c in clicks]
 
     #  Analytics — read (per URL)
-
+    # 3 DB reads queries
+    
     def _date_filters(self, code: str, from_date, to_date):
         filters = [Analytics.code == code]
         if from_date:
@@ -60,15 +61,6 @@ class UrlRepository:
         if to_date:
             filters.append(cast(Analytics.clicked_at, Date) <= to_date)
         return filters
-
-    async def get_clicks_by_day(self, code: str, from_date=None, to_date=None) -> list[dict]:
-        result = await self.session.execute(
-            select(cast(Analytics.clicked_at, Date).label("date"), func.count(Analytics.id).label("clicks"))
-            .filter(*self._date_filters(code, from_date, to_date))
-            .group_by(cast(Analytics.clicked_at, Date))
-            .order_by(cast(Analytics.clicked_at, Date))
-        )
-        return [{"date": str(r.date), "clicks": r.clicks} for r in result.all()]
 
     async def get_summary(self, code: str, created_at: datetime.datetime) -> dict:
         today = datetime.datetime.now(IST).date()
@@ -94,36 +86,29 @@ class UrlRepository:
             "last_clicked_at": row.last_clicked_at,
         }
 
-    async def get_clicks_by_hour(self, code: str, from_date=None, to_date=None) -> list[dict]:
+    async def get_raw_clicks(self, code: str, from_date=None, to_date=None) -> list[dict]:
         result = await self.session.execute(
             select(
                 cast(Analytics.clicked_at, Date).label("date"),
                 extract("hour", Analytics.clicked_at).label("hour"),
-                func.count(Analytics.id).label("clicks"),
-            )
-            .filter(*self._date_filters(code, from_date, to_date))
-            .group_by(cast(Analytics.clicked_at, Date), extract("hour", Analytics.clicked_at))
-            .order_by(cast(Analytics.clicked_at, Date), extract("hour", Analytics.clicked_at))
+                Analytics.country,
+                Analytics.city,
+                Analytics.device,
+                Analytics.browser,
+                Analytics.os,
+            ).filter(*self._date_filters(code, from_date, to_date))
         )
-        return [{"date": str(r.date), "hour": int(r.hour), "clicks": r.clicks} for r in result.all()]
-
-    async def get_peak_hours(self, code: str, from_date=None, to_date=None) -> dict:
-        result = await self.session.execute(
-            select(extract("hour", Analytics.clicked_at).label("hour"), func.count(Analytics.id).label("clicks"))
-            .filter(*self._date_filters(code, from_date, to_date))
-            .group_by(extract("hour", Analytics.clicked_at))
-            .order_by(extract("hour", Analytics.clicked_at))
-        )
-        return {int(r.hour): r.clicks for r in result.all()}
-
-    async def get_breakdown(self, code: str, field: str, from_date=None, to_date=None) -> dict:
-        col = getattr(Analytics, field)
-        result = await self.session.execute(
-            select(col.label("value"), func.count(Analytics.id).label("count"))
-            .filter(*self._date_filters(code, from_date, to_date))
-            .group_by(col)
-            .order_by(func.count(Analytics.id).desc())
-        )
-        return {(r.value or "Others"): r.count for r in result.all()}
+        return [
+            {
+                "date": str(r.date),
+                "hour": int(r.hour),
+                "country": r.country or "Others",
+                "city": r.city or "Others",
+                "device": r.device or "Others",
+                "browser": r.browser or "Others",
+                "os": r.os or "Others",
+            }
+            for r in result.all()
+        ]
 
 
