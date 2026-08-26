@@ -18,26 +18,24 @@ class AnalyticsResponse(BaseModel):
     city: str | None
     device: DeviceType | None
     browser: str | None
-    os: str | None
 
     class Config:
         from_attributes = True
 
 
 # Analytics Read Schemas for Dashboard
+# NOTE: this schema is the source of truth for the analytics dashboard UI.
+# Only fields actually rendered on the analytics page belong here — keep the
+# redis counters, DB models, and aggregation logic in sync with this shape.
 
 class LinkInfo(BaseModel):
     code: str
     short_url: str
     long_url: str
-    created_at: datetime.datetime
 
 class SummaryInfo(BaseModel):
     total_clicks: int
     unique_clicks: int
-    clicks_today: int
-    clicks_this_week: int
-    avg_clicks_per_day: float
     total_countries: int
     total_cities: int
     last_clicked_at: datetime.datetime | None
@@ -46,18 +44,32 @@ class ClicksByDayItem(BaseModel):
     date: str
     clicks: int
 
-class ClicksByHourItem(BaseModel):
-    date: str
-    hours: dict[int, int]  # hour -> clicks
-
 class UrlStatsResponse(BaseModel):
     link: LinkInfo
     summary: SummaryInfo
     clicks_by_day: list[ClicksByDayItem]
-    clicks_by_hour: list[ClicksByHourItem]
     peak_hours: dict[int, int]  # hour -> total clicks across all days
     by_country: dict
     by_city: dict
     by_device: dict
     by_browser: dict
-    by_os: dict
+
+
+# Redis / SSE live-update payload (published on `updates:{code}`).
+# Field names intentionally match SummaryInfo / UrlStatsResponse above —
+# this is the enforced source of truth for the Redis counters and the
+# live snapshot broadcast to the analytics dashboard over SSE.
+
+class LiveSummary(BaseModel):
+    total_clicks: int
+    last_clicked_at: str | None
+    total_countries: int
+    total_cities: int
+
+class LiveSnapshot(BaseModel):
+    summary: LiveSummary
+    by_country: dict[str, int]
+    by_city: dict[str, int]
+    by_device: dict[str, int]
+    by_browser: dict[str, int]
+    clicks_by_day: dict[str, int]

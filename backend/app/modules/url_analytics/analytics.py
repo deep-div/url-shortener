@@ -1,5 +1,4 @@
 import asyncio
-import json
 from types import SimpleNamespace
 import datetime
 import ipaddress
@@ -9,7 +8,7 @@ from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.url_analytics.schema import (
-    AnalyticsResponse, UrlStatsResponse, ClicksByDayItem, ClicksByHourItem,
+    AnalyticsResponse, UrlStatsResponse, ClicksByDayItem,
     LinkInfo, SummaryInfo, DeviceType,
 )
 from app.modules.url_analytics.repository import UrlRepository
@@ -58,7 +57,7 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     logger.info(f"Location resolved: {country}, {city} via {geo_source} for IP: {ip}")
 
     raw_ua = request.headers.get("user-agent", "")
-    device, browser, os_name = None, None, None
+    device, browser = None, None
 
     if raw_ua:
         ua = user_agents.parse(raw_ua)
@@ -72,7 +71,6 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
             device = DeviceType.Other
             logger.warning(f"Unrecognised user-agent for code {code}: {raw_ua[:120]}")
         browser = ua.browser.family or None
-        os_name = ua.os.family or None
     else:
         logger.warning(f"Missing user-agent header for code: {code}")
 
@@ -84,7 +82,6 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         city=city,
         device=device,
         browser=browser,
-        os=os_name,
     )
     
     
@@ -97,7 +94,7 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
         raise HTTPException(status_code=404, detail="Short code not found")
 
     summary_data, rows = await asyncio.gather(
-        repo.get_summary(code, url_row.created_at),
+        repo.get_summary(code),
         repo.get_raw_clicks(code),
     )
 
@@ -105,24 +102,19 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
     by_city: dict[str, int] = {}
     by_device: dict[str, int] = {}
     by_browser: dict[str, int] = {}
-    by_os: dict[str, int] = {}
     clicks_by_day: dict[str, int] = {}
-    clicks_by_hour: dict[str, dict[int, int]] = {}
     peak_hours: dict[int, int] = {}
 
     for r in rows:
         date, hour = r["date"], r["hour"]
 
         clicks_by_day[date] = clicks_by_day.get(date, 0) + 1
-        clicks_by_hour.setdefault(date, {})
-        clicks_by_hour[date][hour] = clicks_by_hour[date].get(hour, 0) + 1
         peak_hours[hour] = peak_hours.get(hour, 0) + 1
 
         by_country[r["country"]] = by_country.get(r["country"], 0) + 1
         by_city[r["city"]] = by_city.get(r["city"], 0) + 1
         by_device[r["device"]] = by_device.get(r["device"], 0) + 1
         by_browser[r["browser"]] = by_browser.get(r["browser"], 0) + 1
-        by_os[r["os"]] = by_os.get(r["os"], 0) + 1
 
     summary_data["total_countries"] = len(by_country)
     summary_data["total_cities"] = len(by_city)
@@ -130,14 +122,11 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
     await seed_counters_if_missing(
         code=code,
         total_clicks=summary_data["total_clicks"],
-        clicks_today=summary_data["clicks_today"],
-        clicks_this_week=summary_data["clicks_this_week"],
         last_clicked_at=summary_data["last_clicked_at"],
         by_country=by_country,
         by_city=by_city,
         by_device=by_device,
         by_browser=by_browser,
-        by_os=by_os,
         clicks_by_day=clicks_by_day,
     )
 
@@ -148,17 +137,14 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
             code=url_row.code,
             short_url=url_row.short_url,
             long_url=url_row.long_url,
-            created_at=url_row.created_at,
         ),
         summary=SummaryInfo(**summary_data),
         clicks_by_day=[ClicksByDayItem(date=d, clicks=c) for d, c in sorted(clicks_by_day.items())],
-        clicks_by_hour=[ClicksByHourItem(date=d, hours=h) for d, h in sorted(clicks_by_hour.items())],
         peak_hours=peak_hours,
         by_country=sort_desc(by_country),
         by_city=sort_desc(by_city),
         by_device=sort_desc(by_device),
         by_browser=sort_desc(by_browser),
-        by_os=sort_desc(by_os),
     )
 
 async def run_url_analytics_redis(payloads: list[dict]) -> None:
@@ -176,14 +162,13 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
                 city=c.city,
                 device=c.device.value if c.device else None,
                 browser=c.browser,
-                os=c.os,
             )
             for c in clicks
         ])
 
         for c in clicks:
             payload = await get_live_snapshot(c.code)
-            await redis_client.publish(f"updates:{c.code}", json.dumps(payload))
+            await redis_client.publish(f"updates:{c.code}", payload.model_dump_json())
 
         logger.info(f"Redis: incremented counters and published {len(clicks)} click events")
 

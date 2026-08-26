@@ -19,7 +19,6 @@ class Analytics(Base):
     city       = Column(String, nullable=True)
     device     = Column(String, nullable=True)
     browser    = Column(String, nullable=True)
-    os         = Column(String, nullable=True)
 
     __table_args__ = (
         Index("index_code_clickedat", "code", "clicked_at"),

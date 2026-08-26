@@ -7,7 +7,7 @@ from alembic import context
 
 from app.clients.postgresql import DATABASE_URL, Base
 import app.modules.url_shortener.models  # noqa: F401 — registers Url with Base.metadata
-import app.repositories.models           # noqa: F401 — registers Analytics, UniqueIp with Base.metadata
+import app.modules.url_analytics.models  # noqa: F401 — registers Analytics, UniqueIp with Base.metadata
 
 config = context.config
 
@@ -38,7 +38,14 @@ def do_run_migrations(connection) -> None:
 
 
 async def run_migrations_online() -> None:
-    connectable = create_async_engine(DATABASE_URL, poolclass=pool.NullPool)
+    connectable = create_async_engine(
+        DATABASE_URL,
+        poolclass=pool.NullPool,
+        connect_args={
+            "ssl": "require",
+            "statement_cache_size": 0,
+        },
+    )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()

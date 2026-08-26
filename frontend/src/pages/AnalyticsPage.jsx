@@ -83,7 +83,6 @@ export default function AnalyticsPage() {
         by_city: snapshot.by_city,
         by_device: snapshot.by_device,
         by_browser: snapshot.by_browser,
-        by_os: snapshot.by_os,
         clicks_by_day: Object.entries(snapshot.clicks_by_day ?? {})
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([date, clicks]) => ({ date, clicks })),

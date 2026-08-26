@@ -1,13 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, cast, Date, case, extract
+from sqlalchemy import select, func, cast, Date, extract
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.modules.url_analytics.models import Analytics, UniqueIp
 from app.modules.url_shortener.models import Url
-import datetime
-import pytz
-
-IST = pytz.timezone("Asia/Kolkata")
 
 
 class UrlRepository:
@@ -43,7 +39,6 @@ class UrlRepository:
                     "city": c.city,
                     "device": c.device,
                     "browser": c.browser,
-                    "os": c.os,
                 }
                 for c in clicks
             ],
@@ -52,29 +47,18 @@ class UrlRepository:
         return [(c.code, c.ip) in newly_unique for c in clicks]
 
     #  Analytics — read (per URL)
-    # 2 DB reads queries analytics
-
-    async def get_summary(self, code: str, created_at: datetime.datetime) -> dict:
-        today = datetime.datetime.now(IST).date()
-        week_start = today - datetime.timedelta(days=today.weekday())
+    async def get_summary(self, code: str) -> dict:
         result = await self.session.execute(
             select(
                 func.count(Analytics.id).label("total_clicks"),
                 func.count(Analytics.ip.distinct()).label("unique_clicks"),
                 func.max(Analytics.clicked_at).label("last_clicked_at"),
-                func.sum(case((cast(Analytics.clicked_at, Date) == today, 1), else_=0)).label("clicks_today"),
-                func.sum(case((cast(Analytics.clicked_at, Date) >= week_start, 1), else_=0)).label("clicks_this_week"),
             ).filter(Analytics.code == code)
         )
         row = result.one()
-        days_active = max((today - created_at.date()).days, 1)
-        total = row.total_clicks or 0
         return {
-            "total_clicks": total,
+            "total_clicks": row.total_clicks or 0,
             "unique_clicks": row.unique_clicks or 0,
-            "clicks_today": int(row.clicks_today or 0),
-            "clicks_this_week": int(row.clicks_this_week or 0),
-            "avg_clicks_per_day": round(total / days_active, 2),
             "last_clicked_at": row.last_clicked_at,
         }
 
@@ -87,7 +71,6 @@ class UrlRepository:
                 Analytics.city,
                 Analytics.device,
                 Analytics.browser,
-                Analytics.os,
             ).filter(Analytics.code == code)
         )
         return [
@@ -98,7 +81,6 @@ class UrlRepository:
                 "city": r.city or "Others",
                 "device": r.device or "Others",
                 "browser": r.browser or "Others",
-                "os": r.os or "Others",
             }
             for r in result.all()
         ]
