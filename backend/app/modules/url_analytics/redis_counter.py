@@ -64,6 +64,51 @@ async def increment_click(
     await pipe.execute()
 
 
+async def seed_counters_if_missing(
+    code: str,
+    total_clicks: int,
+    clicks_today: int,
+    clicks_this_week: int,
+    last_clicked_at: datetime.datetime | None,
+    by_country: dict[str, int],
+    by_city: dict[str, int],
+    by_device: dict[str, int],
+    by_browser: dict[str, int],
+    by_os: dict[str, int],
+    clicks_by_day: dict[str, int],
+) -> None:
+    k = _keys(code)
+
+    # SET NX is the atomic gate — if the key already exists, Kafka is already
+    # live-incrementing this code and we must not clobber real-time counts.
+    acquired = await redis_client.set(k["total_clicks"], total_clicks, nx=True)
+    if not acquired:
+        return
+
+    pipe = redis_client.pipeline()
+    pipe.set(k["clicks_today"], clicks_today)
+    pipe.set(k["clicks_this_week"], clicks_this_week)
+    if last_clicked_at:
+        pipe.set(k["last_clicked_at"], last_clicked_at.isoformat())
+    if by_country:
+        pipe.hset(k["by_country"], mapping=by_country)
+    if by_city:
+        pipe.hset(k["by_city"], mapping=by_city)
+    if by_device:
+        pipe.hset(k["by_device"], mapping=by_device)
+    if by_browser:
+        pipe.hset(k["by_browser"], mapping=by_browser)
+    if by_os:
+        pipe.hset(k["by_os"], mapping=by_os)
+    if clicks_by_day:
+        pipe.hset(k["clicks_by_day"], mapping=clicks_by_day)
+
+    for key in k.values():
+        pipe.expire(key, TTL_SECONDS)
+
+    await pipe.execute()
+
+
 async def get_live_stats(code: str) -> dict:
     k = _keys(code)
 

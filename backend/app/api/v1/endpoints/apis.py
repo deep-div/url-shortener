@@ -6,7 +6,7 @@ from app.core.logging import logger
 from app.clients.postgresql import get_db
 from app.modules.url_shortener.security import validate_url
 from app.modules.url_shortener.shorten import run_url_shortener, run_resolve_code
-from app.modules.url_analytics.analytics import get_url_stats as fetch_url_stats
+from app.modules.url_analytics.analytics import get_url_stats 
 from app.modules.url_shortener.kafka_producer_clicks import produce_click_event
 from app.modules.url_analytics.schema import UrlStatsResponse
 
@@ -40,4 +40,4 @@ async def get_url_analytics(
     from_date: datetime.date | None = Query(default=None),
     to_date: datetime.date | None = Query(default=None),
 ):
-    return await fetch_url_stats(code, db, from_date, to_date)
+    return await get_url_stats(code, db, from_date, to_date)

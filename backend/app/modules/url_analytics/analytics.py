@@ -12,7 +12,7 @@ from app.modules.url_analytics.schema import (
     LinkInfo, SummaryInfo, DeviceType,
 )
 from app.modules.url_analytics.repository import UrlRepository
-from app.modules.url_analytics.redis_counter import increment_click
+from app.modules.url_analytics.redis_counter import increment_click, seed_counters_if_missing
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
 from app.clients.geoip import get_location
@@ -125,6 +125,20 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
 
     summary_data["total_countries"] = len(by_country)
     summary_data["total_cities"] = len(by_city)
+
+    await seed_counters_if_missing(
+        code=code,
+        total_clicks=summary_data["total_clicks"],
+        clicks_today=summary_data["clicks_today"],
+        clicks_this_week=summary_data["clicks_this_week"],
+        last_clicked_at=summary_data["last_clicked_at"],
+        by_country=by_country,
+        by_city=by_city,
+        by_device=by_device,
+        by_browser=by_browser,
+        by_os=by_os,
+        clicks_by_day=clicks_by_day,
+    )
 
     sort_desc = lambda d: dict(sorted(d.items(), key=lambda x: -x[1]))
 
