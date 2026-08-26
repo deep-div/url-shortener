@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router
 from app.clients.geoip import init_geoip
 from app.modules.url_shortener.kafka_producer_clicks import start_producer, stop_producer
-from app.modules.url_analytics.kafka_consumer_db import start_consumer
+from app.modules.url_analytics.kafka_consumer_db import start_consumer as start_db_consumer
+from app.modules.url_analytics.kafka_consumer_redis import start_consumer as start_redis_consumer
 from app.core.logging import logger
 
 
@@ -16,10 +17,14 @@ async def lifespan(app: FastAPI):
     logger.info("Application starting up")
     init_geoip()
     await start_producer()
-    asyncio.create_task(start_consumer())
+    db_task = asyncio.create_task(start_db_consumer())
+    redis_task = asyncio.create_task(start_redis_consumer())
     yield
     logger.info("Application shutting down")
     await stop_producer()
+    db_task.cancel()
+    redis_task.cancel()
+    await asyncio.gather(db_task, redis_task, return_exceptions=True)
 
 
 app = FastAPI(title="URL Shortener", lifespan=lifespan)

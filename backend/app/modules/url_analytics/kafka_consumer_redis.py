@@ -1,4 +1,5 @@
 import asyncio
+import json
 from aiokafka import AIOKafkaConsumer
 from app.clients.kafka import kafka_client
 from app.core.config import settings
@@ -16,7 +17,7 @@ async def start_consumer() -> None:
         group_id="url-analytics-redis",
         auto_offset_reset="earliest",
         enable_auto_commit=False,
-        value_deserializer=lambda v: __import__("json").loads(v.decode()),
+        value_deserializer=lambda v: json.loads(v.decode()),
     )
     await consumer.start()
     logger.info("Kafka Redis consumer started")

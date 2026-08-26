@@ -85,7 +85,9 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         browser=browser,
         os=os_name,
     )
-
+    
+    
+## 3 DB read Queries
 async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
@@ -176,7 +178,7 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
         logger.error(f"Redis analytics failed: {e}", exc_info=True)
         raise
 
-
+## 2 DB write Queries
 async def run_url_analytics_batch(payloads: list[dict]) -> None:
     """Process a batch of click events — one bulk DB insert instead of N individual ones."""
     try:

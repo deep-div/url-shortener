@@ -9,7 +9,6 @@ from app.modules.url_shortener.shorten import run_url_shortener, run_resolve_cod
 from app.modules.url_analytics.analytics import get_url_stats as fetch_url_stats
 from app.modules.url_shortener.kafka_producer import produce_click_event
 from app.modules.url_analytics.schema import UrlStatsResponse
-from app.api.v1.endpoints.utils import extract_code
 
 router = APIRouter()
 
@@ -32,3 +31,13 @@ async def resolve_url(code: str, request: Request, background_tasks: BackgroundT
         raise HTTPException(status_code=404, detail="Short code not found")
     background_tasks.add_task(produce_click_event, code, request)
     return RedirectResponse(url=long_url, status_code=302)
+
+
+@router.get("/v1/analytics/{code}", response_model=UrlStatsResponse)
+async def get_url_analytics(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+    from_date: datetime.date | None = Query(default=None),
+    to_date: datetime.date | None = Query(default=None),
+):
+    return await fetch_url_stats(code, db, from_date, to_date)
