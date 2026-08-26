@@ -15,12 +15,8 @@ export async function shortenUrl(url) {
   return res.json();
 }
 
-export async function getUrlStats(code, { from, to } = {}) {
-  const params = new URLSearchParams();
-  if (from) params.set('from', from);
-  if (to) params.set('to', to);
-  const query = params.toString() ? `?${params}` : '';
-  const res = await fetch(`/v1/analytics/${code}${query}`);
+export async function getUrlStats(code) {
+  const res = await fetch(`/v1/analytics/${code}`);
   if (res.status === 429) throw new Error('Too many requests — please wait a moment and try again');
   if (res.status === 404) throw new Error(`No analytics found for /${code}`);
   if (!res.ok) throw new Error(`Failed to load analytics (${res.status})`);

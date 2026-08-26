@@ -52,15 +52,7 @@ class UrlRepository:
         return [(c.code, c.ip) in newly_unique for c in clicks]
 
     #  Analytics — read (per URL)
-    # 3 DB reads queries analytics
-    
-    def _date_filters(self, code: str, from_date, to_date):
-        filters = [Analytics.code == code]
-        if from_date:
-            filters.append(cast(Analytics.clicked_at, Date) >= from_date)
-        if to_date:
-            filters.append(cast(Analytics.clicked_at, Date) <= to_date)
-        return filters
+    # 2 DB reads queries analytics
 
     async def get_summary(self, code: str, created_at: datetime.datetime) -> dict:
         today = datetime.datetime.now(IST).date()
@@ -86,7 +78,7 @@ class UrlRepository:
             "last_clicked_at": row.last_clicked_at,
         }
 
-    async def get_raw_clicks(self, code: str, from_date=None, to_date=None) -> list[dict]:
+    async def get_raw_clicks(self, code: str) -> list[dict]:
         result = await self.session.execute(
             select(
                 cast(Analytics.clicked_at, Date).label("date"),
@@ -96,7 +88,7 @@ class UrlRepository:
                 Analytics.device,
                 Analytics.browser,
                 Analytics.os,
-            ).filter(*self._date_filters(code, from_date, to_date))
+            ).filter(Analytics.code == code)
         )
         return [
             {

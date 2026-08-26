@@ -1,5 +1,4 @@
-import datetime
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
@@ -37,8 +36,6 @@ async def resolve_url(code: str, request: Request, background_tasks: BackgroundT
 async def get_url_analytics(
     code: str,
     db: AsyncSession = Depends(get_db),
-    from_date: datetime.date | None = Query(default=None),
-    to_date: datetime.date | None = Query(default=None),
 ):
     code = extract_code(code)
-    return await get_url_stats(code, db, from_date, to_date)
+    return await get_url_stats(code, db)

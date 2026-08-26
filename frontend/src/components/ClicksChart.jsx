@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -41,16 +41,6 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-const RANGES = [
-  { label: 'Today',        value: 'today' },
-  { label: 'Yesterday',    value: 'yesterday' },
-  { label: 'Last 7 days',  value: '7d' },
-  { label: 'Last 14 days', value: '14d' },
-  { label: 'Last 30 days', value: '30d' },
-  { label: 'Last 90 days', value: '90d' },
-  { label: 'All time',     value: 'all' },
-];
-
 function AreaIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -91,55 +81,6 @@ function ChartTypeToggle({ chartType, onChartTypeChange }) {
   );
 }
 
-function ChevronIcon({ open }) {
-  return (
-    <svg
-      width="14" height="14" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2.5"
-      strokeLinecap="round" strokeLinejoin="round"
-      style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function RangeDropdown({ range, onRangeChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const selected = RANGES.find((r) => r.value === range) ?? RANGES[RANGES.length - 1];
-
-  useEffect(() => {
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-  return (
-    <div className="range-dropdown" ref={ref}>
-      <button className="range-dropdown-btn" onClick={() => setOpen((o) => !o)}>
-        {selected.label}
-        <ChevronIcon open={open} />
-      </button>
-      {open && (
-        <div className="range-dropdown-menu">
-          {RANGES.map((r) => (
-            <button
-              key={r.value}
-              className={`range-dropdown-item${r.value === range ? ' active' : ''}`}
-              onClick={() => { onRangeChange?.(r.value); setOpen(false); }}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function formatHour(val) {
   const h = Number(val);
   if (h === 0) return '12am';
@@ -162,7 +103,7 @@ function CustomHourTooltip({ active, payload, label }) {
   );
 }
 
-export default function ClicksChart({ data, peakHours, range = 'all', onRangeChange }) {
+export default function ClicksChart({ data, peakHours }) {
   const [chartType, setChartType] = useState('area');
   const [viewTab, setViewTab] = useState('days');
 
@@ -243,7 +184,6 @@ export default function ClicksChart({ data, peakHours, range = 'all', onRangeCha
         </div>
         <div className="chart-head-right">
           <ChartTypeToggle chartType={chartType} onChartTypeChange={setChartType} />
-          <RangeDropdown range={range} onRangeChange={onRangeChange} />
         </div>
       </div>
 

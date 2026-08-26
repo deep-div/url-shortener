@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ClicksChart from '../components/ClicksChart.jsx';
 import DonutChart from '../components/DonutChart.jsx';
@@ -48,25 +48,11 @@ function withClientIp(url, ip) {
   return `${url}${separator}ipv4=${encodeURIComponent(ip)}`;
 }
 
-function getRangeDates(value) {
-  const today = new Date();
-  const fmt = (d) => d.toISOString().split('T')[0];
-  const ago = (n) => { const d = new Date(today); d.setDate(d.getDate() - n); return d; };
-  if (value === 'today')     return { from: fmt(today),    to: fmt(today) };
-  if (value === 'yesterday') return { from: fmt(ago(1)),   to: fmt(ago(1)) };
-  if (value === '7d')        return { from: fmt(ago(6)),   to: fmt(today) };
-  if (value === '14d')       return { from: fmt(ago(13)),  to: fmt(today) };
-  if (value === '30d')       return { from: fmt(ago(29)),  to: fmt(today) };
-  if (value === '90d')       return { from: fmt(ago(89)),  to: fmt(today) };
-  return {};
-}
-
 export default function AnalyticsPage() {
   const { code } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [range, setRange] = useState('all');
   const [clientIp, setClientIp] = useState('');
   const { copied, copy } = useClipboard();
 
@@ -80,17 +66,14 @@ export default function AnalyticsPage() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getUrlStats(code, getRangeDates(range))
+    getUrlStats(code)
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [code, range]);
-
-  const rangeRef = useRef(range);
-  rangeRef.current = range;
+  }, [code]);
 
   useAnalyticsSocket(code, (snapshot) => {
-    // Live counters from Redis — update instantly
+    // Live counters from Redis — update instantly, no re-fetch of /v1/analytics/{code}
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -101,17 +84,11 @@ export default function AnalyticsPage() {
         by_device: snapshot.by_device,
         by_browser: snapshot.by_browser,
         by_os: snapshot.by_os,
+        clicks_by_day: Object.entries(snapshot.clicks_by_day ?? {})
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([date, clicks]) => ({ date, clicks })),
       };
     });
-    // Time-series charts live only in Postgres — re-fetch on each click event
-    getUrlStats(code, getRangeDates(rangeRef.current))
-      .then((fresh) => {
-        setData((prev) => {
-          if (!prev) return prev;
-          return { ...prev, clicks_by_day: fresh.clicks_by_day, peak_hours: fresh.peak_hours };
-        });
-      })
-      .catch(() => {});
   });
 
   if (loading) {
@@ -209,7 +186,7 @@ export default function AnalyticsPage() {
         <StatsSummaryBar summary={summary} />
 
         {/* Clicks over time */}
-        <ClicksChart data={clicks_by_day} peakHours={peak_hours} range={range} onRangeChange={setRange} />
+        <ClicksChart data={clicks_by_day} peakHours={peak_hours} />
 
         {/* Locations · Devices · Browsers */}
         <div className="analytics-grid-3">

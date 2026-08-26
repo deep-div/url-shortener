@@ -89,7 +89,7 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     
     
 ## 3 DB read Queries
-async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=None) -> UrlStatsResponse:
+async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
     if not url_row:
@@ -98,7 +98,7 @@ async def get_url_stats(code: str, db: AsyncSession, from_date=None, to_date=Non
 
     summary_data, rows = await asyncio.gather(
         repo.get_summary(code, url_row.created_at),
-        repo.get_raw_clicks(code, from_date, to_date),
+        repo.get_raw_clicks(code),
     )
 
     by_country: dict[str, int] = {}

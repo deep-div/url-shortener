@@ -174,4 +174,5 @@ async def get_live_snapshot(code: str) -> dict:
         "by_device": stats["by_device"],
         "by_browser": stats["by_browser"],
         "by_os": stats["by_os"],
+        "clicks_by_day": stats["clicks_by_day"],
     }
