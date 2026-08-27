@@ -11,6 +11,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - LOG_LEVEL=WARNING
       - BASE_URL=http://localhost
     volumes:
       - ./backend/.logs:/app/backend/.logs

@@ -1,10 +1,10 @@
 from redis.asyncio import Redis, BlockingConnectionPool
-from redis.asyncio.connection import SSLConnection
+from redis.asyncio.connection import Connection
 
 from app.core.config import settings
 
 redis_pool = BlockingConnectionPool(
-    connection_class=SSLConnection,
+    connection_class=Connection,
     host=settings.REDIS_HOST,
     port=settings.REDIS_PORT,
     password=settings.REDIS_KEY,
