@@ -23,7 +23,8 @@ def _keys(code: str) -> dict[str, str]:
     }
 
 
-async def increment_click(
+def _queue_click_increment(
+    pipe,
     code: str,
     clicked_at: datetime.datetime,
     ip: str | None,
@@ -35,8 +36,6 @@ async def increment_click(
     k = _keys(code)
     date_str = clicked_at.strftime("%Y-%m-%d")
     clicked_at_iso = clicked_at.isoformat()
-
-    pipe = redis_client.pipeline()
 
     pipe.incr(k["total_clicks"])
     pipe.set(k["last_clicked_at"], clicked_at_iso)
@@ -52,6 +51,39 @@ async def increment_click(
     for key in k.values():
         pipe.expire(key, TTL_SECONDS)
 
+
+async def increment_click(
+    code: str,
+    clicked_at: datetime.datetime,
+    ip: str | None,
+    country: str | None,
+    city: str | None,
+    device: str | None,
+    browser: str | None,
+) -> None:
+    pipe = redis_client.pipeline()
+    _queue_click_increment(pipe, code, clicked_at, ip, country, city, device, browser)
+    await pipe.execute()
+
+
+async def increment_clicks_batch(clicks: list) -> None:
+    """Queues every click in `clicks` onto a single pipeline and executes it
+    once — avoids checking out one Redis connection per click, which
+    exhausts the connection pool on large batches."""
+    if not clicks:
+        return
+    pipe = redis_client.pipeline()
+    for c in clicks:
+        _queue_click_increment(
+            pipe,
+            code=c.code,
+            clicked_at=c.clicked_at,
+            ip=c.ip,
+            country=c.country,
+            city=c.city,
+            device=c.device.value if c.device else None,
+            browser=c.browser,
+        )
     await pipe.execute()
 
 

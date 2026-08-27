@@ -13,7 +13,7 @@ from app.modules.url_analytics.schema import (
 )
 from app.modules.url_analytics.repository import UrlRepository
 from app.modules.url_analytics.redis_counter import (
-    increment_click, get_live_snapshot,
+    increment_clicks_batch, get_live_snapshot,
     cache_exists, get_cached_stats, set_cached_stats,
 )
 from app.clients.postgresql import AsyncSessionLocal
@@ -156,18 +156,7 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
             for p in payloads
         ])
 
-        await asyncio.gather(*[
-            increment_click(
-                code=c.code,
-                clicked_at=c.clicked_at,
-                ip=c.ip,
-                country=c.country,
-                city=c.city,
-                device=c.device.value if c.device else None,
-                browser=c.browser,
-            )
-            for c in clicks
-        ])
+        await increment_clicks_batch(clicks)
 
         for c in clicks:
             payload = await get_live_snapshot(c.code)
