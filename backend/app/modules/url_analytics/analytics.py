@@ -187,11 +187,16 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
 
         await increment_clicks_batch(clicks)
 
-        for c in clicks:
-            payload = await get_live_snapshot(c.code)
-            await redis_client.publish(f"updates:{c.code}", payload.model_dump_json())
+        # Multiple clicks in a batch often share a code — snapshot/publish once
+        # per unique code, not once per click. Sequential on purpose: this keeps
+        # Redis usage at 1 connection at a time, so it can never itself trigger
+        # pool contention/errors, even at the cost of added latency under load.
+        unique_codes = {c.code for c in clicks}
+        for code in unique_codes:
+            payload = await get_live_snapshot(code)
+            await redis_client.publish(f"updates:{code}", payload.model_dump_json())
 
-        logger.info(f"Redis: incremented counters and published {len(clicks)} click events")
+        logger.info(f"Redis: incremented counters and published updates for {len(unique_codes)} codes ({len(clicks)} click events)")
 
     except Exception as e:
         logger.error(f"Redis analytics failed: {e}", exc_info=True)
