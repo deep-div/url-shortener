@@ -11,25 +11,21 @@ from app.modules.url_shortener.schema import ShortenResponse
 from app.modules.url_shortener.generate_code import generate_code
 from app.modules.url_shortener.repository import UrlRepository
 
-REDIS_TTL = 60 * 60 * 24 * 30        # 30 days
-REFRESH_THRESHOLD = 60 * 60 * 24 * 7  # refresh only if < 7 days remaining
+REDIS_TTL = 60 * 60 * 24            # 1 day
 BASE_URL = settings.BASE_URL.rstrip("/")
 
 ## Generate code 
-# 1. URL exists in Redis, TTL > 7 days → 0 DB, 2 Redis commands, 1 Redis round trip
-# 2. URL exists in Redis, TTL < 7 days → 0 DB, 4 Redis commands, 2 Redis round trips
-# 3. URL not in Redis, URL exists in DB → 1 DB, 4 Redis commands, 2 Redis round trips
-# 4. URL not in Redis, new URL, code generated successfully → 1 DB, 2 Redis commands, 1 Redis round trip
-# 5. URL not in Redis, new URL, code collision once → 1 DB + 1 DB retry, 2 Redis commands, 1 Redis round trip
-# 6. URL not in Redis, new URL, N code collisions → N+1 DB attempts, 2 Redis commands, 1 Redis round trip
+# 1. URL exists in Redis → 0 DB, 1 Redis command, 1 Redis round trip
+# 2. URL not in Redis, URL exists in DB → 1 DB, 2 Redis commands, 1 Redis round trip
+# 3. URL not in Redis, new URL, code generated successfully → 1 DB, 2 Redis commands, 1 Redis round trip
+# 4. URL not in Redis, new URL, code collision once → 1 DB + 1 DB retry, 2 Redis commands, 1 Redis round trip
+# 5. URL not in Redis, new URL, N code collisions → N+1 DB attempts, 2 Redis commands, 1 Redis round trip
 
 
 ## Resolve code 
-# 1. Code exists in Redis, TTL > 7 days → 0 DB, 2 Redis commands, 1 Redis round trip
-# 2. Code exists in Redis, TTL < 7 days → 0 DB, 4 Redis commands, 2 Redis round trips
-# 3. Code not in Redis, code exists in DB → 1 DB, 4 Redis commands, 2 Redis round trips
-# 4. Code not in Redis, code does not exist in DB → 1 DB, 2 Redis commands, 1 Redis round trip
-# 5. Redis hit, but TTL = -1 → 0 DB, 2 Redis commands, 1 Redis round trip
+# 1. Code exists in Redis → 0 DB, 1 Redis command, 1 Redis round trip
+# 2. Code not in Redis, code exists in DB → 1 DB, 2 Redis commands, 1 Redis round trip
+# 3. Code not in Redis, code does not exist in DB → 1 DB, 0 Redis commands, 0 Redis round trip
 
 class UrlShortener:
 
@@ -37,11 +33,9 @@ class UrlShortener:
         self.repo = UrlRepository(session)
 
     async def generate_short_code(self, url: str) -> ShortenResponse:
-        existing_code, cached_ttl = await _get_with_ttl(f"url:{url}")
+        existing_code = await _get_cache(f"url:{url}")
 
         if existing_code:
-            if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
-                asyncio.create_task(_refresh_ttl(existing_code, url))
             return ShortenResponse(code=existing_code, short_url=f"{BASE_URL}/{existing_code}")
 
         attempt = 0
@@ -66,12 +60,10 @@ class UrlShortener:
         return ShortenResponse(code=row.code, short_url=row.short_url)
 
     async def resolve_code(self, code: str) -> str | None:
-        # check Redis cache — 1 round-trip for GET + TTL together
-        existing, ttl = await _get_with_ttl(f"code:{code}")
+        # check Redis cache
+        existing = await _get_cache(f"code:{code}")
 
         if existing:
-            if ttl != -1 and ttl < REFRESH_THRESHOLD:
-                asyncio.create_task(_refresh_ttl(code, existing))  # expire runs after response sent
             return existing
 
         # cache miss (or Redis unavailable) — PostgreSQL is the source of truth
@@ -85,15 +77,12 @@ class UrlShortener:
         return None
 
 
-async def _get_with_ttl(key: str) -> tuple[str | None, int | None]:
+async def _get_cache(key: str) -> str | None:
     try:
-        pipe = redis_client.pipeline()
-        pipe.get(key)
-        pipe.ttl(key)
-        return await pipe.execute()
+        return await redis_client.get(key)
     except RedisError as e:
         logger.warning(f"Redis unavailable while reading {key}, falling back to DB. Error: {e}")
-        return None, None
+        return None
 
 
 async def _set_cache(url: str, code: str, ttl: int = REDIS_TTL) -> None:
@@ -104,16 +93,6 @@ async def _set_cache(url: str, code: str, ttl: int = REDIS_TTL) -> None:
         await pipe.execute()
     except RedisError as e:
         logger.warning(f"Redis unavailable while caching code={code}, url={url}. Error: {e}")
-
-
-async def _refresh_ttl(code: str, url: str, ttl: int = REDIS_TTL) -> None:
-    try:
-        pipe = redis_client.pipeline()
-        pipe.expire(f"code:{code}", ttl)
-        pipe.expire(f"url:{url}", ttl)
-        await pipe.execute()
-    except RedisError as e:
-        logger.warning(f"Redis unavailable while refreshing TTL for code={code}, url={url}. Error: {e}")
 
 
 async def run_url_shortener(url: str, session: AsyncSession) -> ShortenResponse:

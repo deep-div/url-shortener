@@ -17,6 +17,9 @@ async def start_consumer() -> None:
         settings.KAFKA_CLICKS_TOPIC,
         **kafka_client,
         group_id="url-analytics-consumer",
+        group_instance_id=f"url-analytics-consumer-{settings.WORKER_ID}",
+        session_timeout_ms=30000,
+        heartbeat_interval_ms=10000,
         auto_offset_reset="earliest",
         enable_auto_commit=False,  # I will commit offsets myself kafka cant commit it 
         value_deserializer=lambda v: json.loads(v.decode()),
