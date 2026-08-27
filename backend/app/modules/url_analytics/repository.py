@@ -85,4 +85,10 @@ class UrlRepository:
             for r in result.all()
         ]
 
+    async def get_unique_ips(self, code: str) -> list[str]:
+        result = await self.session.execute(
+            select(UniqueIp.ip).filter(UniqueIp.code == code)
+        )
+        return [r.ip for r in result.all()]
+
 

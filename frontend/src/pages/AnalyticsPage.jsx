@@ -73,19 +73,19 @@ export default function AnalyticsPage() {
   }, [code]);
 
   useAnalyticsSocket(code, (snapshot) => {
-    // Live counters from Redis — update instantly, no re-fetch of /v1/analytics/{code}
+    // Live counters from Redis — now the same UrlStatsResponse shape as the
+    // initial GET, so we just merge the pieces that can change live.
     setData((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
-        summary: { ...prev.summary, ...snapshot.summary },
+        summary: snapshot.summary,
         by_country: snapshot.by_country,
         by_city: snapshot.by_city,
         by_device: snapshot.by_device,
         by_browser: snapshot.by_browser,
-        clicks_by_day: Object.entries(snapshot.clicks_by_day ?? {})
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([date, clicks]) => ({ date, clicks })),
+        peak_hours: snapshot.peak_hours,
+        clicks_by_day: snapshot.clicks_by_day,
       };
     });
   });

@@ -144,12 +144,17 @@ async def db_read(code: str, db: AsyncSession) -> UrlStatsResponse:
     )
 
 
+async def db_unique_ips(code: str, db: AsyncSession):
+    return await UrlRepository(db).get_unique_ips(code)
+
+
 async def redis_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
     if await cache_exists(code):
         return await get_cached_stats(code)
 
     response = await db_read(code, db)
-    await set_cached_stats(code, response)
+    unique_ips = await db_unique_ips(code, db)
+    await set_cached_stats(code, response, unique_ips)
     return response
 
 
@@ -167,6 +172,7 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
             increment_click(
                 code=c.code,
                 clicked_at=c.clicked_at,
+                ip=c.ip,
                 country=c.country,
                 city=c.city,
                 device=c.device.value if c.device else None,

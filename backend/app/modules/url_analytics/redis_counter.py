@@ -1,7 +1,6 @@
 import datetime
 from app.clients.redis import redis_client
 from app.modules.url_analytics.schema import (
-    LiveSnapshot, LiveSummary,
     UrlStatsResponse, LinkInfo, SummaryInfo, ClicksByDayItem,
 )
 
@@ -27,6 +26,7 @@ def _keys(code: str) -> dict[str, str]:
 async def increment_click(
     code: str,
     clicked_at: datetime.datetime,
+    ip: str | None,
     country: str | None,
     city: str | None,
     device: str | None,
@@ -40,6 +40,8 @@ async def increment_click(
 
     pipe.incr(k["total_clicks"])
     pipe.set(k["last_clicked_at"], clicked_at_iso)
+    if ip:
+        pipe.pfadd(k["unique_clicks"], ip)
     pipe.hincrby(k["by_country"], country or "Others", 1)
     pipe.hincrby(k["by_city"], city or "Others", 1)
     pipe.hincrby(k["by_device"], device or "Others", 1)
@@ -69,7 +71,7 @@ async def get_cached_stats(code: str) -> UrlStatsResponse:
     pipe = redis_client.pipeline()
     pipe.hgetall(k["link"])
     pipe.get(k["total_clicks"])
-    pipe.get(k["unique_clicks"])
+    pipe.pfcount(k["unique_clicks"])
     pipe.get(k["last_clicked_at"])
     pipe.hgetall(k["by_country"])
     pipe.hgetall(k["by_city"])
@@ -116,13 +118,18 @@ async def get_cached_stats(code: str) -> UrlStatsResponse:
     )
 
 
-async def set_cached_stats(code: str, response: UrlStatsResponse) -> None:
+async def set_cached_stats(code: str, response: UrlStatsResponse, unique_ips: list[str]) -> None:
+    """Seeds every stats:{code}:* key from a fully-built UrlStatsResponse.
+    `unique_ips` is the exact IP list from Postgres's unique_ips table —
+    it's only ever used here to build the stats:{code}:unique_clicks sketch and is
+    never stored as-is or returned to the API."""
     k = _keys(code)
     pipe = redis_client.pipeline()
 
     pipe.hset(k["link"], mapping={"short_url": response.link.short_url, "long_url": response.link.long_url})
     pipe.set(k["total_clicks"], response.summary.total_clicks)
-    pipe.set(k["unique_clicks"], response.summary.unique_clicks)
+    if unique_ips:
+        pipe.pfadd(k["unique_clicks"], *unique_ips)
     if response.summary.last_clicked_at:
         pipe.set(k["last_clicked_at"], response.summary.last_clicked_at.isoformat())
     if response.by_country:
@@ -144,61 +151,9 @@ async def set_cached_stats(code: str, response: UrlStatsResponse) -> None:
     await pipe.execute()
 
 
-async def get_live_stats(code: str) -> dict:
-    k = _keys(code)
-
-    pipe = redis_client.pipeline()
-    pipe.get(k["total_clicks"])
-    pipe.get(k["last_clicked_at"])
-    pipe.hgetall(k["by_country"])
-    pipe.hgetall(k["by_city"])
-    pipe.hgetall(k["by_device"])
-    pipe.hgetall(k["by_browser"])
-    pipe.hgetall(k["clicks_by_day"])
-
-    (
-        total_clicks,
-        last_clicked_at,
-        by_country,
-        by_city,
-        by_device,
-        by_browser,
-        clicks_by_day,
-    ) = await pipe.execute()
-
-    by_country = {k: int(v) for k, v in by_country.items()}
-    by_city = {k: int(v) for k, v in by_city.items()}
-    by_device = {k: int(v) for k, v in by_device.items()}
-    by_browser = {k: int(v) for k, v in by_browser.items()}
-
-    return {
-        "total_clicks":     int(total_clicks or 0),
-        "last_clicked_at":  last_clicked_at,
-        "by_country":       by_country,
-        "by_city":          by_city,
-        "by_device":        by_device,
-        "by_browser":       by_browser,
-        "clicks_by_day":    {k: int(v) for k, v in clicks_by_day.items()},
-    }
-
-
-async def get_live_snapshot(code: str) -> LiveSnapshot:
-    """Live-update payload published over SSE — summary + breakdowns.
-
-    Returns a validated `LiveSnapshot` (schema.py), the enforced source of
-    truth for the Redis counters and the analytics dashboard's live updates.
-    """
-    stats = await get_live_stats(code)
-    return LiveSnapshot(
-        summary=LiveSummary(
-            total_clicks=stats["total_clicks"],
-            last_clicked_at=stats["last_clicked_at"],
-            total_countries=len(stats["by_country"]),
-            total_cities=len(stats["by_city"]),
-        ),
-        by_country=stats["by_country"],
-        by_city=stats["by_city"],
-        by_device=stats["by_device"],
-        by_browser=stats["by_browser"],
-        clicks_by_day=stats["clicks_by_day"],
-    )
+async def get_live_snapshot(code: str) -> UrlStatsResponse:
+    """Live-update payload published over SSE after every click. Now the
+    exact same shape as the dashboard's GET response (UrlStatsResponse) —
+    once increment_click has run, Redis holds the full up-to-date picture,
+    so this just re-reads the cache."""
+    return await get_cached_stats(code)

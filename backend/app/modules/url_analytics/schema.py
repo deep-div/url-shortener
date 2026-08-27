@@ -55,21 +55,6 @@ class UrlStatsResponse(BaseModel):
     by_browser: dict
 
 
-# Redis / SSE live-update payload (published on `updates:{code}`).
-# Field names intentionally match SummaryInfo / UrlStatsResponse above —
-# this is the enforced source of truth for the Redis counters and the
-# live snapshot broadcast to the analytics dashboard over SSE.
-
-class LiveSummary(BaseModel):
-    total_clicks: int
-    last_clicked_at: str | None
-    total_countries: int
-    total_cities: int
-
-class LiveSnapshot(BaseModel):
-    summary: LiveSummary
-    by_country: dict[str, int]
-    by_city: dict[str, int]
-    by_device: dict[str, int]
-    by_browser: dict[str, int]
-    clicks_by_day: dict[str, int]
+# Redis pub/sub (published on `updates:{code}`) reuses UrlStatsResponse
+# directly — the live SSE payload and the dashboard's initial GET response
+# are now the exact same shape, so the frontend can merge them as-is.
