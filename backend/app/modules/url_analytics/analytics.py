@@ -97,28 +97,15 @@ async def db_read(code: str, db: AsyncSession) -> UrlStatsResponse:
         logger.warning(f"Analytics requested for unknown code: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
 
-    summary_data, rows = await asyncio.gather(
+    summary_data, day_rows, peak_hours, by_country, by_city, by_device, by_browser = await asyncio.gather(
         repo.get_summary(code),
-        repo.get_raw_clicks(code),
+        repo.get_clicks_by_day(code),
+        repo.get_peak_hours(code),
+        repo.get_by_country(code),
+        repo.get_by_city(code),
+        repo.get_by_device(code),
+        repo.get_by_browser(code),
     )
-
-    by_country: dict[str, int] = {}
-    by_city: dict[str, int] = {}
-    by_device: dict[str, int] = {}
-    by_browser: dict[str, int] = {}
-    clicks_by_day: dict[str, int] = {}
-    peak_hours: dict[int, int] = {}
-
-    for r in rows:
-        date, hour = r["date"], r["hour"]
-
-        clicks_by_day[date] = clicks_by_day.get(date, 0) + 1
-        peak_hours[hour] = peak_hours.get(hour, 0) + 1
-
-        by_country[r["country"]] = by_country.get(r["country"], 0) + 1
-        by_city[r["city"]] = by_city.get(r["city"], 0) + 1
-        by_device[r["device"]] = by_device.get(r["device"], 0) + 1
-        by_browser[r["browser"]] = by_browser.get(r["browser"], 0) + 1
 
     sort_desc = lambda d: dict(sorted(d.items(), key=lambda x: -x[1]))
 
@@ -135,7 +122,7 @@ async def db_read(code: str, db: AsyncSession) -> UrlStatsResponse:
             total_cities=len(by_city),
             last_clicked_at=summary_data["last_clicked_at"],
         ),
-        clicks_by_day=[ClicksByDayItem(date=d, clicks=c) for d, c in sorted(clicks_by_day.items())],
+        clicks_by_day=[ClicksByDayItem(date=r["date"], clicks=r["clicks"]) for r in day_rows],
         peak_hours=peak_hours,
         by_country=sort_desc(by_country),
         by_city=sort_desc(by_city),

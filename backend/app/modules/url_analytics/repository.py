@@ -62,28 +62,60 @@ class UrlRepository:
             "last_clicked_at": row.last_clicked_at,
         }
 
-    async def get_raw_clicks(self, code: str) -> list[dict]:
+    async def get_clicks_by_day(self, code: str) -> list[dict]:
+        date_col = cast(Analytics.clicked_at, Date)
         result = await self.session.execute(
-            select(
-                cast(Analytics.clicked_at, Date).label("date"),
-                extract("hour", Analytics.clicked_at).label("hour"),
-                Analytics.country,
-                Analytics.city,
-                Analytics.device,
-                Analytics.browser,
-            ).filter(Analytics.code == code)
+            select(date_col.label("date"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(date_col)
+            .order_by(date_col)
         )
-        return [
-            {
-                "date": str(r.date),
-                "hour": int(r.hour),
-                "country": r.country or "Others",
-                "city": r.city or "Others",
-                "device": r.device or "Others",
-                "browser": r.browser or "Others",
-            }
-            for r in result.all()
-        ]
+        return [{"date": str(r.date), "clicks": r.clicks} for r in result.all()]
+
+    async def get_peak_hours(self, code: str) -> dict[int, int]:
+        hour_col = extract("hour", Analytics.clicked_at)
+        result = await self.session.execute(
+            select(hour_col.label("hour"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(hour_col)
+        )
+        return {int(r.hour): r.clicks for r in result.all()}
+
+    async def get_by_country(self, code: str) -> dict[str, int]:
+        country_col = func.coalesce(Analytics.country, "Others")
+        result = await self.session.execute(
+            select(country_col.label("country"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(country_col)
+        )
+        return {r.country: r.clicks for r in result.all()}
+
+    async def get_by_city(self, code: str) -> dict[str, int]:
+        city_col = func.coalesce(Analytics.city, "Others")
+        result = await self.session.execute(
+            select(city_col.label("city"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(city_col)
+        )
+        return {r.city: r.clicks for r in result.all()}
+
+    async def get_by_device(self, code: str) -> dict[str, int]:
+        device_col = func.coalesce(Analytics.device, "Others")
+        result = await self.session.execute(
+            select(device_col.label("device"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(device_col)
+        )
+        return {r.device: r.clicks for r in result.all()}
+
+    async def get_by_browser(self, code: str) -> dict[str, int]:
+        browser_col = func.coalesce(Analytics.browser, "Others")
+        result = await self.session.execute(
+            select(browser_col.label("browser"), func.count().label("clicks"))
+            .filter(Analytics.code == code)
+            .group_by(browser_col)
+        )
+        return {r.browser: r.clicks for r in result.all()}
 
     async def get_unique_ips(self, code: str) -> list[str]:
         result = await self.session.execute(
