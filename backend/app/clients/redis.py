@@ -8,4 +8,5 @@ redis_client = Redis(
     password=settings.REDIS_KEY,
     decode_responses=True,
     ssl=True,
+    max_connections=200,
 )
