@@ -47,6 +47,7 @@ async def increment_click(
     pipe.hincrby(k["by_device"], device or "Others", 1)
     pipe.hincrby(k["by_browser"], browser or "Others", 1)
     pipe.hincrby(k["clicks_by_day"], date_str, 1)
+    pipe.hincrby(k["peak_hours"], str(clicked_at.hour), 1)
 
     for key in k.values():
         pipe.expire(key, TTL_SECONDS)
