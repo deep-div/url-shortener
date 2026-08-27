@@ -8,7 +8,7 @@ from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_batch
 from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
 
-BATCH_SIZE = 100
+BATCH_SIZE = 5000
 BATCH_TIMEOUT_SECS = 5
 
 
@@ -46,7 +46,7 @@ async def start_consumer() -> None:
 
             if buffer and (time_up or batch_full):
                 reason = "batch_full" if batch_full else "time_up"
-                logger.info(f"Flushing {len(buffer)} click events — reason: {reason}")
+                logger.info(f"DB consumer flushing {len(buffer)} events — reason: {reason}")
                 try:
                     await run_url_analytics_batch(buffer)
                     await consumer.commit()

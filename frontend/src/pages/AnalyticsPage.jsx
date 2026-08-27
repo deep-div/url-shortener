@@ -72,23 +72,29 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, [code]);
 
-  useAnalyticsSocket(code, (snapshot) => {
-    // Live counters from Redis — now the same UrlStatsResponse shape as the
-    // initial GET, so we just merge the pieces that can change live.
-    setData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        summary: snapshot.summary,
-        by_country: snapshot.by_country,
-        by_city: snapshot.by_city,
-        by_device: snapshot.by_device,
-        by_browser: snapshot.by_browser,
-        peak_hours: snapshot.peak_hours,
-        clicks_by_day: snapshot.clicks_by_day,
-      };
-    });
-  });
+  useAnalyticsSocket(
+    code,
+    (snapshot) => {
+      // Live counters from Redis — now the same UrlStatsResponse shape as the
+      // initial GET, so we just merge the pieces that can change live.
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          summary: snapshot.summary,
+          by_country: snapshot.by_country,
+          by_city: snapshot.by_city,
+          by_device: snapshot.by_device,
+          by_browser: snapshot.by_browser,
+          peak_hours: snapshot.peak_hours,
+          clicks_by_day: snapshot.clicks_by_day,
+        };
+      });
+    },
+    // Only start the live SSE connection once the initial REST load has
+    // finished successfully — never before, and never on error.
+    !loading && !error && !!data
+  );
 
   if (loading) {
     return (

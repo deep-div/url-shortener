@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 
-export function useAnalyticsSocket(code, onSnapshot) {
+export function useAnalyticsSocket(code, onSnapshot, enabled = true) {
   const onSnapshotRef = useRef(onSnapshot);
   onSnapshotRef.current = onSnapshot;
 
   useEffect(() => {
-    if (!code) return;
+    if (!code || !enabled) return;
 
     const url = `/v1/analytics/live/${code}`;
     const es = new EventSource(url);
@@ -24,5 +24,5 @@ export function useAnalyticsSocket(code, onSnapshot) {
     };
 
     return () => es.close();
-  }, [code]);
+  }, [code, enabled]);
 }
