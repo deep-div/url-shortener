@@ -1,10 +1,12 @@
 import asyncio
+import datetime
 import json
 from aiokafka import AIOKafkaConsumer
 from app.clients.kafka import kafka_client
 from app.core.config import settings
 from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_redis
+from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
 
 BATCH_SIZE = 3500
 BATCH_TIMEOUT_SECS = 2
@@ -49,7 +51,27 @@ async def start_consumer() -> None:
                     await run_url_analytics_redis(buffer)
                     await consumer.commit()
                 except Exception as e:
-                    logger.error(f"Redis consumer batch failed — skipping, PostgreSQL is source of truth. Error: {e}", exc_info=True)
+                    offsets = {
+                        f"partition_{tp.partition}": consumer.position(tp)
+                        for tp in consumer.assignment()
+                    }
+                    logger.error(
+                        f"Redis consumer batch failed — pushing {len(buffer)} messages to DLQ. "
+                        f"Offsets: {offsets}. Error: {e}",
+                        exc_info=True,
+                    )
+                    dlq_messages = [
+                        {
+                            "source_topic": settings.KAFKA_CLICKS_TOPIC,
+                            "consumer_group": "url-analytics-redis",
+                            "partitions": offsets,
+                            "failed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                            "error": str(e),
+                            "payload": payload,
+                        }
+                        for payload in buffer
+                    ]
+                    await send_to_dlq(dlq_messages)
                     await consumer.commit()
                 finally:
                     buffer = []
