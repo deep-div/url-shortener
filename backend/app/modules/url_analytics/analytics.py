@@ -137,6 +137,7 @@ async def db_unique_ips(code: str, db: AsyncSession):
 
 async def redis_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
     if await cache_exists(code):
+        logger.info("Successfully read URL Anlaytics from Redis for code=%s", code)
         return await get_cached_stats(code)
 
     response = await db_read(code, db)
