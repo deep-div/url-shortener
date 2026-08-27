@@ -10,6 +10,8 @@ services:
       - "443:443"
     env_file:
       - ./backend/.env
+    environment:
+      - BASE_URL=http://localhost
     volumes:
       - ./backend/.logs:/app/backend/.logs
     restart: unless-stopped
