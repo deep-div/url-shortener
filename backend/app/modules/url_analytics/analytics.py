@@ -12,7 +12,10 @@ from app.modules.url_analytics.schema import (
     LinkInfo, SummaryInfo, DeviceType,
 )
 from app.modules.url_analytics.repository import UrlRepository
-from app.modules.url_analytics.redis_counter import increment_click, seed_counters_if_missing, get_live_snapshot
+from app.modules.url_analytics.redis_counter import (
+    increment_click, get_live_snapshot,
+    cache_exists, get_cached_stats, set_cached_stats,
+)
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
 from app.clients.geoip import get_location
@@ -85,8 +88,9 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
     )
     
     
-## 3 DB read Queries
-async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
+async def db_read(code: str, db: AsyncSession) -> UrlStatsResponse:
+    """Cache-miss path — reads Postgres and builds the full UrlStatsResponse,
+    which also acts as the payload used to re-seed the Redis cache."""
     repo = UrlRepository(db)
     url_row = await repo.get_by_code(code)
     if not url_row:
@@ -116,20 +120,6 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
         by_device[r["device"]] = by_device.get(r["device"], 0) + 1
         by_browser[r["browser"]] = by_browser.get(r["browser"], 0) + 1
 
-    summary_data["total_countries"] = len(by_country)
-    summary_data["total_cities"] = len(by_city)
-
-    await seed_counters_if_missing(
-        code=code,
-        total_clicks=summary_data["total_clicks"],
-        last_clicked_at=summary_data["last_clicked_at"],
-        by_country=by_country,
-        by_city=by_city,
-        by_device=by_device,
-        by_browser=by_browser,
-        clicks_by_day=clicks_by_day,
-    )
-
     sort_desc = lambda d: dict(sorted(d.items(), key=lambda x: -x[1]))
 
     return UrlStatsResponse(
@@ -138,7 +128,13 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
             short_url=url_row.short_url,
             long_url=url_row.long_url,
         ),
-        summary=SummaryInfo(**summary_data),
+        summary=SummaryInfo(
+            total_clicks=summary_data["total_clicks"],
+            unique_clicks=summary_data["unique_clicks"],
+            total_countries=len(by_country),
+            total_cities=len(by_city),
+            last_clicked_at=summary_data["last_clicked_at"],
+        ),
         clicks_by_day=[ClicksByDayItem(date=d, clicks=c) for d, c in sorted(clicks_by_day.items())],
         peak_hours=peak_hours,
         by_country=sort_desc(by_country),
@@ -146,6 +142,19 @@ async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
         by_device=sort_desc(by_device),
         by_browser=sort_desc(by_browser),
     )
+
+
+async def redis_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
+    if await cache_exists(code):
+        return await get_cached_stats(code)
+
+    response = await db_read(code, db)
+    await set_cached_stats(code, response)
+    return response
+
+
+async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
+    return await redis_cache(code, db)
 
 async def run_url_analytics_redis(payloads: list[dict]) -> None:
     try:
@@ -176,7 +185,6 @@ async def run_url_analytics_redis(payloads: list[dict]) -> None:
         logger.error(f"Redis analytics failed: {e}", exc_info=True)
         raise
 
-## 2 DB write Queries
 async def run_url_analytics_batch(payloads: list[dict]) -> None:
     """Process a batch of click events — one bulk DB insert instead of N individual ones."""
     try:

@@ -1,16 +1,9 @@
 import datetime
 from app.clients.redis import redis_client
-from app.modules.url_analytics.schema import LiveSnapshot, LiveSummary
-
-# Key schema — mirrors app.modules.url_analytics.schema.UrlStatsResponse,
-# the source-of-truth read schema for the analytics dashboard UI.
-# stats:{code}:total_clicks        → string counter
-# stats:{code}:last_clicked_at     → string ISO timestamp
-# stats:{code}:by_country          → hash  {country: count}
-# stats:{code}:by_city             → hash  {city: count}
-# stats:{code}:by_device           → hash  {device: count}
-# stats:{code}:by_browser          → hash  {browser: count}
-# stats:{code}:clicks_by_day       → hash  {YYYY-MM-DD: count}
+from app.modules.url_analytics.schema import (
+    LiveSnapshot, LiveSummary,
+    UrlStatsResponse, LinkInfo, SummaryInfo, ClicksByDayItem,
+)
 
 TTL_SECONDS = 60 * 60 * 24 * 7  # 7 days — evict stale URL counters automatically
 
@@ -18,13 +11,16 @@ TTL_SECONDS = 60 * 60 * 24 * 7  # 7 days — evict stale URL counters automatica
 def _keys(code: str) -> dict[str, str]:
     p = f"stats:{code}"
     return {
+        "link":             f"{p}:link",
         "total_clicks":     f"{p}:total_clicks",
+        "unique_clicks":    f"{p}:unique_clicks",
         "last_clicked_at":  f"{p}:last_clicked_at",
         "by_country":       f"{p}:by_country",
         "by_city":          f"{p}:by_city",
         "by_device":        f"{p}:by_device",
         "by_browser":       f"{p}:by_browser",
         "clicks_by_day":    f"{p}:clicks_by_day",
+        "peak_hours":       f"{p}:peak_hours",
     }
 
 
@@ -56,37 +52,91 @@ async def increment_click(
     await pipe.execute()
 
 
-async def seed_counters_if_missing(
-    code: str,
-    total_clicks: int,
-    last_clicked_at: datetime.datetime | None,
-    by_country: dict[str, int],
-    by_city: dict[str, int],
-    by_device: dict[str, int],
-    by_browser: dict[str, int],
-    clicks_by_day: dict[str, int],
-) -> None:
+# Cache-aside for the analytics dashboard (UrlStatsResponse) — Redis holds
+# hot data for 7 days, Postgres remains the source of truth. A code is only
+# considered "cached" when every key below is present; a single missing key
+# means the whole dataset gets rebuilt from the DB.
+
+async def cache_exists(code: str) -> bool:
+    k = _keys(code)
+    present = await redis_client.exists(*k.values())
+    return present == len(k)
+
+
+async def get_cached_stats(code: str) -> UrlStatsResponse:
     k = _keys(code)
 
-    # SET NX is the atomic gate — if the key already exists, Kafka is already
-    # live-incrementing this code and we must not clobber real-time counts.
-    acquired = await redis_client.set(k["total_clicks"], total_clicks, nx=True)
-    if not acquired:
-        return
-
     pipe = redis_client.pipeline()
-    if last_clicked_at:
-        pipe.set(k["last_clicked_at"], last_clicked_at.isoformat())
-    if by_country:
-        pipe.hset(k["by_country"], mapping=by_country)
-    if by_city:
-        pipe.hset(k["by_city"], mapping=by_city)
-    if by_device:
-        pipe.hset(k["by_device"], mapping=by_device)
-    if by_browser:
-        pipe.hset(k["by_browser"], mapping=by_browser)
-    if clicks_by_day:
-        pipe.hset(k["clicks_by_day"], mapping=clicks_by_day)
+    pipe.hgetall(k["link"])
+    pipe.get(k["total_clicks"])
+    pipe.get(k["unique_clicks"])
+    pipe.get(k["last_clicked_at"])
+    pipe.hgetall(k["by_country"])
+    pipe.hgetall(k["by_city"])
+    pipe.hgetall(k["by_device"])
+    pipe.hgetall(k["by_browser"])
+    pipe.hgetall(k["clicks_by_day"])
+    pipe.hgetall(k["peak_hours"])
+
+    (
+        link,
+        total_clicks,
+        unique_clicks,
+        last_clicked_at,
+        by_country,
+        by_city,
+        by_device,
+        by_browser,
+        clicks_by_day,
+        peak_hours,
+    ) = await pipe.execute()
+
+    by_country = {c: int(v) for c, v in by_country.items()}
+    by_city = {c: int(v) for c, v in by_city.items()}
+    sort_desc = lambda d: dict(sorted(d.items(), key=lambda x: -x[1]))
+
+    return UrlStatsResponse(
+        link=LinkInfo(code=code, short_url=link["short_url"], long_url=link["long_url"]),
+        summary=SummaryInfo(
+            total_clicks=int(total_clicks or 0),
+            unique_clicks=int(unique_clicks or 0),
+            total_countries=len(by_country),
+            total_cities=len(by_city),
+            last_clicked_at=datetime.datetime.fromisoformat(last_clicked_at) if last_clicked_at else None,
+        ),
+        clicks_by_day=[
+            ClicksByDayItem(date=d, clicks=int(c))
+            for d, c in sorted(clicks_by_day.items())
+        ],
+        peak_hours={int(h): int(v) for h, v in peak_hours.items()},
+        by_country=sort_desc(by_country),
+        by_city=sort_desc(by_city),
+        by_device=sort_desc({c: int(v) for c, v in by_device.items()}),
+        by_browser=sort_desc({c: int(v) for c, v in by_browser.items()}),
+    )
+
+
+async def set_cached_stats(code: str, response: UrlStatsResponse) -> None:
+    k = _keys(code)
+    pipe = redis_client.pipeline()
+
+    pipe.hset(k["link"], mapping={"short_url": response.link.short_url, "long_url": response.link.long_url})
+    pipe.set(k["total_clicks"], response.summary.total_clicks)
+    pipe.set(k["unique_clicks"], response.summary.unique_clicks)
+    if response.summary.last_clicked_at:
+        pipe.set(k["last_clicked_at"], response.summary.last_clicked_at.isoformat())
+    if response.by_country:
+        pipe.hset(k["by_country"], mapping=response.by_country)
+    if response.by_city:
+        pipe.hset(k["by_city"], mapping=response.by_city)
+    if response.by_device:
+        pipe.hset(k["by_device"], mapping=response.by_device)
+    if response.by_browser:
+        pipe.hset(k["by_browser"], mapping=response.by_browser)
+    if response.clicks_by_day:
+        pipe.hset(k["clicks_by_day"], mapping={item.date: item.clicks for item in response.clicks_by_day})
+    if response.peak_hours:
+        pipe.hset(k["peak_hours"], mapping=response.peak_hours)
 
     for key in k.values():
         pipe.expire(key, TTL_SECONDS)
