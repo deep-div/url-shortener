@@ -16,6 +16,8 @@ from app.modules.url_analytics.redis_counter import (
     increment_clicks_batch, get_live_snapshot,
     cache_exists, get_cached_stats, set_cached_stats,
 )
+from redis.asyncio.lock import Lock
+
 from app.clients.postgresql import AsyncSessionLocal
 from app.clients.redis import redis_client
 from app.clients.geoip import get_location
@@ -135,15 +137,42 @@ async def db_unique_ips(code: str, db: AsyncSession):
     return await UrlRepository(db).get_unique_ips(code)
 
 
+async def _rebuild_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
+    response = await db_read(code, db)
+    unique_ips = await db_unique_ips(code, db)
+    await set_cached_stats(code, response, unique_ips)
+    return response
+
+
+async def cache_stampede_guard(code: str, db: AsyncSession) -> UrlStatsResponse:
+    """On a cache miss, many concurrent requests for the same `code` would
+    otherwise all fall through to Postgres at once (cache stampede). A
+    distributed lock ensures only one request rebuilds the cache — everyone
+    else either waits for it or, once acquired, re-checks the cache first
+    since another request may have just filled it."""
+    lock = Lock(redis_client, f"lock:stats:{code}", timeout=10, blocking_timeout=10)
+
+    if await lock.acquire():
+        try:
+            if await cache_exists(code):
+                return await get_cached_stats(code)
+            return await _rebuild_cache(code, db)
+        finally:
+            await lock.release()
+
+    # Didn't get the lock in time — the rebuild should be done (or nearly done) by now.
+    if await cache_exists(code):
+        return await get_cached_stats(code)
+    logger.warning(f"Cache stampede guard timed out for code={code}, falling back to direct DB read")
+    return await db_read(code, db)
+
+
 async def redis_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
     if await cache_exists(code):
         logger.info("Successfully read URL Anlaytics from Redis for code=%s", code)
         return await get_cached_stats(code)
 
-    response = await db_read(code, db)
-    unique_ips = await db_unique_ips(code, db)
-    await set_cached_stats(code, response, unique_ips)
-    return response
+    return await cache_stampede_guard(code, db)
 
 
 async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
