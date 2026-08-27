@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ClicksChart from '../components/ClicksChart.jsx';
 import DonutChart from '../components/DonutChart.jsx';
@@ -55,6 +55,7 @@ export default function AnalyticsPage() {
   const [error, setError] = useState(null);
   const [clientIp, setClientIp] = useState('');
   const { copied, copy } = useClipboard();
+  const fetchedCodeRef = useRef(null);
 
   useEffect(() => {
     fetch('https://api.ipify.org/?format=json')
@@ -64,6 +65,11 @@ export default function AnalyticsPage() {
   }, []);
 
   useEffect(() => {
+    // Guard against StrictMode's dev-only double-invoke of this effect,
+    // which would otherwise fire getUrlStats(code) twice per mount.
+    if (fetchedCodeRef.current === code) return;
+    fetchedCodeRef.current = code;
+
     setLoading(true);
     setError(null);
     getUrlStats(code)
