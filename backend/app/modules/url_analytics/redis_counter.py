@@ -48,28 +48,15 @@ def _queue_click_increment(
     pipe.hincrby(k["clicks_by_day"], date_str, 1)
     pipe.hincrby(k["peak_hours"], str(clicked_at.hour), 1)
 
-    for key in k.values():
-        pipe.expire(key, TTL_SECONDS)
-
-
-async def increment_click(
-    code: str,
-    clicked_at: datetime.datetime,
-    ip: str | None,
-    country: str | None,
-    city: str | None,
-    device: str | None,
-    browser: str | None,
-) -> None:
-    pipe = redis_client.pipeline()
-    _queue_click_increment(pipe, code, clicked_at, ip, country, city, device, browser)
-    await pipe.execute()
-
 
 async def increment_clicks_batch(clicks: list) -> None:
     """Queues every click in `clicks` onto a single pipeline and executes it
     once — avoids checking out one Redis connection per click, which
-    exhausts the connection pool on large batches."""
+    exhausts the connection pool on large batches.
+
+    TTL is refreshed once per unique code per batch, not once per click —
+    the same code clicked thousands of times in one batch only needs its
+    keys' 7-day TTL restated once, not thousands of times."""
     if not clicks:
         return
     pipe = redis_client.pipeline()
@@ -84,6 +71,9 @@ async def increment_clicks_batch(clicks: list) -> None:
             device=c.device.value if c.device else None,
             browser=c.browser,
         )
+    for code in {c.code for c in clicks}:
+        for key in _keys(code).values():
+            pipe.expire(key, TTL_SECONDS)
     await pipe.execute()
 
 
@@ -187,6 +177,6 @@ async def set_cached_stats(code: str, response: UrlStatsResponse, unique_ips: li
 async def get_live_snapshot(code: str) -> UrlStatsResponse:
     """Live-update payload published over SSE after every click. Now the
     exact same shape as the dashboard's GET response (UrlStatsResponse) —
-    once increment_click has run, Redis holds the full up-to-date picture,
+    once increment_clicks_batch has run, Redis holds the full up-to-date picture,
     so this just re-reads the cache."""
     return await get_cached_stats(code)
