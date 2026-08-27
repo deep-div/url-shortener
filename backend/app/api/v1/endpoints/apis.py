@@ -19,12 +19,25 @@ async def shorten_url(db: AsyncSession = Depends(get_db), url: str = Form(...)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    return await run_url_shortener(url, db)
+    try:
+        return await run_url_shortener(url, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"shorten_url failed for url={url}. Error: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
 
 
 @router.get("/{code}")
 async def resolve_url(code: str, request: Request, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
-    long_url = await run_resolve_code(code, db)
+    try:
+        long_url = await run_resolve_code(code, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"resolve_url failed for code={code}. Error: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
     if not long_url:
         logger.warning(f"Short code not found: {code}")
         raise HTTPException(status_code=404, detail="Short code not found")
@@ -38,4 +51,10 @@ async def get_url_analytics(
     db: AsyncSession = Depends(get_db),
 ):
     code = extract_code(code)
-    return await get_url_stats(code, db)
+    try:
+        return await get_url_stats(code, db)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_url_analytics failed for code={code}. Error: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")

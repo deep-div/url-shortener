@@ -1,5 +1,6 @@
 import asyncio
 
+from redis.exceptions import RedisError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,11 +37,7 @@ class UrlShortener:
         self.repo = UrlRepository(session)
 
     async def generate_short_code(self, url: str) -> ShortenResponse:
-        pipe = redis_client.pipeline()
-        pipe.get(f"url:{url}")
-        pipe.ttl(f"url:{url}")
-        results = await pipe.execute()
-        existing_code, cached_ttl = results[0], results[1]
+        existing_code, cached_ttl = await _get_with_ttl(f"url:{url}")
 
         if existing_code:
             if cached_ttl != -1 and cached_ttl < REFRESH_THRESHOLD:
@@ -60,10 +57,7 @@ class UrlShortener:
                 attempt += 1
                 logger.error(f"Code collision on attempt {attempt}: code={code}, url={url}")
 
-        pipe = redis_client.pipeline()
-        pipe.set(f"url:{url}", code, ex=REDIS_TTL)
-        pipe.set(f"code:{code}", url, ex=REDIS_TTL)
-        await pipe.execute()
+        await _set_cache(url, code)
 
         return ShortenResponse(code=code, short_url=short_url)
 
@@ -73,16 +67,14 @@ class UrlShortener:
 
     async def resolve_code(self, code: str) -> str | None:
         # check Redis cache — 1 round-trip for GET + TTL together
-        pipe = redis_client.pipeline()
-        pipe.get(f"code:{code}")
-        pipe.ttl(f"code:{code}")
-        existing, ttl = await pipe.execute()
+        existing, ttl = await _get_with_ttl(f"code:{code}")
+
         if existing:
             if ttl != -1 and ttl < REFRESH_THRESHOLD:
                 asyncio.create_task(_refresh_ttl(code, existing))  # expire runs after response sent
             return existing
 
-        # cache miss — check PostgreSQL
+        # cache miss (or Redis unavailable) — PostgreSQL is the source of truth
         logger.warning(f"Redis cache miss for code: {code}, falling back to DB")
         row = await self.repo.get_by_code(code)
         if row:
@@ -93,18 +85,35 @@ class UrlShortener:
         return None
 
 
-async def _set_cache(url: str, code: str) -> None:
-    pipe = redis_client.pipeline()
-    pipe.set(f"url:{url}", code, ex=REDIS_TTL)
-    pipe.set(f"code:{code}", url, ex=REDIS_TTL)
-    await pipe.execute()
+async def _get_with_ttl(key: str) -> tuple[str | None, int | None]:
+    try:
+        pipe = redis_client.pipeline()
+        pipe.get(key)
+        pipe.ttl(key)
+        return await pipe.execute()
+    except RedisError as e:
+        logger.warning(f"Redis unavailable while reading {key}, falling back to DB. Error: {e}")
+        return None, None
 
 
-async def _refresh_ttl(code: str, url: str) -> None:
-    pipe = redis_client.pipeline()
-    pipe.expire(f"code:{code}", REDIS_TTL)
-    pipe.expire(f"url:{url}", REDIS_TTL)
-    await pipe.execute()
+async def _set_cache(url: str, code: str, ttl: int = REDIS_TTL) -> None:
+    try:
+        pipe = redis_client.pipeline()
+        pipe.set(f"url:{url}", code, ex=ttl)
+        pipe.set(f"code:{code}", url, ex=ttl)
+        await pipe.execute()
+    except RedisError as e:
+        logger.warning(f"Redis unavailable while caching code={code}, url={url}. Error: {e}")
+
+
+async def _refresh_ttl(code: str, url: str, ttl: int = REDIS_TTL) -> None:
+    try:
+        pipe = redis_client.pipeline()
+        pipe.expire(f"code:{code}", ttl)
+        pipe.expire(f"url:{url}", ttl)
+        await pipe.execute()
+    except RedisError as e:
+        logger.warning(f"Redis unavailable while refreshing TTL for code={code}, url={url}. Error: {e}")
 
 
 async def run_url_shortener(url: str, session: AsyncSession) -> ShortenResponse:
