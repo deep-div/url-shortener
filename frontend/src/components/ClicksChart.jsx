@@ -220,7 +220,7 @@ export default function ClicksChart({ data, peakHours }) {
       ) : (
         <ResponsiveContainer width="100%" height={280}>
           {chartType === 'bar' ? (
-            <BarChart data={activeData} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+            <BarChart data={activeData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
               {sharedAxes}
               <Tooltip
                 content={isHours ? <CustomHourTooltip /> : <CustomTooltip />}
@@ -234,7 +234,7 @@ export default function ClicksChart({ data, peakHours }) {
               />
             </BarChart>
           ) : (
-            <AreaChart data={activeData} margin={{ top: 12, right: 8, left: -18, bottom: 0 }}>
+            <AreaChart data={activeData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="clicksGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#6366F1" stopOpacity={0.22} />
