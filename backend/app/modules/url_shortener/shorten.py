@@ -74,14 +74,23 @@ class UrlShortener:
     async def _resolve_stampede_guard(self, code: str) -> str | None:
         lock = Lock(redis_client, f"lock:code:{code}", timeout=10, blocking_timeout=10)
 
-        if await lock.acquire():
+        try:
+            acquired = await lock.acquire()
+        except RedisError as e:
+            logger.warning(f"Redis unavailable while acquiring stampede lock for code={code}, falling back to direct DB read. Error: {e}")
+            return await self._db_read(code)
+
+        if acquired:
             try:
                 existing = await _get_cache(f"code:{code}")
                 if existing:
                     return existing
                 return await self._db_read_and_cache(code)
             finally:
-                await lock.release()
+                try:
+                    await lock.release()
+                except RedisError as e:
+                    logger.warning(f"Redis unavailable while releasing stampede lock for code={code}. Error: {e}")
 
         # Didn't get the lock in time — the rebuild should be done (or nearly done) by now.
         existing = await _get_cache(f"code:{code}")
