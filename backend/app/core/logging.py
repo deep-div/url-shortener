@@ -10,6 +10,19 @@ from app.core.config import settings
 # Maximum number of log entries kept in the file before oldest are trimmed
 MAX_LOG_LINES = 500
 
+# Custom level above WARNING (30) — used to highlight successful
+# operations at a severity higher than warnings.
+SUCCESS_LEVEL = 35
+logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
+
+
+def _success(self, message, *args, **kwargs):
+    if self.isEnabledFor(SUCCESS_LEVEL):
+        self._log(SUCCESS_LEVEL, message, args, **kwargs)
+
+
+logging.Logger.success = _success
+
 
 class JsonFormatter(logging.Formatter):
     """Format log records as structured JSON."""

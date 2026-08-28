@@ -24,8 +24,9 @@ async def lifespan(app: FastAPI):
         await start_dlq_producer()
         db_task = asyncio.create_task(start_db_consumer())
         redis_task = asyncio.create_task(start_redis_consumer())
+        logger.success("Kafka Status =True")
     else:
-        logger.info("KAFKA_ENABLED=False — running in direct (no Kafka) mode")
+        logger.success("Kafka Status =False")
     yield
     logger.info("Application shutting down")
     if settings.KAFKA_ENABLED:
