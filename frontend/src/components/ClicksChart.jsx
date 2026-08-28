@@ -4,6 +4,7 @@ import {
   BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import { formatCompactNumber } from '../utils/format.js';
 
 function formatDay(val) {
   // "2026-08-05" -> "Aug 5"
@@ -11,16 +12,10 @@ function formatDay(val) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+// Same K / L / Cr compact scheme used on the stat cards, so the chart axis
+// and the cards below it never disagree on how a number is abbreviated.
 function formatYAxis(val) {
-  if (val >= 1_000_000) {
-    const m = val / 1_000_000;
-    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
-  }
-  if (val >= 1000) {
-    const k = val / 1000;
-    return `${Number.isInteger(k) ? k : k.toFixed(1)}K`;
-  }
-  return val;
+  return formatCompactNumber(val);
 }
 
 // Rounds up to a "nice" 1/2/5-times-a-power-of-ten number so the axis top
@@ -146,7 +141,7 @@ export default function ClicksChart({ data, peakHours }) {
       <CartesianGrid stroke="none" vertical={false} horizontal={false} />
       <XAxis
         dataKey="hour"
-        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
         axisLine={false}
         tickLine={false}
         tickFormatter={formatHour}
@@ -154,7 +149,7 @@ export default function ClicksChart({ data, peakHours }) {
         padding={{ left: 12, right: 12 }}
       />
       <YAxis
-        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
         axisLine={false}
         tickLine={false}
         allowDecimals={false}
@@ -169,14 +164,14 @@ export default function ClicksChart({ data, peakHours }) {
       <CartesianGrid stroke="none" vertical={false} horizontal={false} />
       <XAxis
         dataKey="date"
-        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
         axisLine={false}
         tickLine={false}
         tickFormatter={formatDay}
         padding={{ left: 12, right: 12 }}
       />
       <YAxis
-        tick={{ fill: 'var(--text-faint)', fontSize: 12 }}
+        tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
         axisLine={false}
         tickLine={false}
         allowDecimals={false}
