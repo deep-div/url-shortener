@@ -1,6 +1,6 @@
 import json
 from aiokafka import AIOKafkaProducer
-from app.clients.kafka import kafka_client
+from app.clients.kafka import get_kafka_client
 from app.core.config import settings
 from app.core.logging import logger
 
@@ -10,7 +10,7 @@ _dlq_producer: AIOKafkaProducer | None = None
 async def start_dlq_producer() -> None:
     global _dlq_producer
     _dlq_producer = AIOKafkaProducer(
-        **kafka_client,
+        **get_kafka_client(),
         value_serializer=lambda v: json.dumps(v).encode(),
     )
     await _dlq_producer.start()

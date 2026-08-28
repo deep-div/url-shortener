@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import json
 from aiokafka import AIOKafkaConsumer
-from app.clients.kafka import kafka_client
+from app.clients.kafka import get_kafka_client
 from app.core.config import settings
 from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_batch
@@ -15,7 +15,7 @@ BATCH_TIMEOUT_SECS = 5
 async def start_consumer() -> None:
     consumer = AIOKafkaConsumer(
         settings.KAFKA_CLICKS_TOPIC,
-        **kafka_client,
+        **get_kafka_client(),
         group_id="url-analytics-consumer",
         group_instance_id=f"url-analytics-consumer-{settings.WORKER_ID}",
         session_timeout_ms=30000,

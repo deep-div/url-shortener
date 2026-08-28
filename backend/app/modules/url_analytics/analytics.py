@@ -55,11 +55,9 @@ async def parse_click_data(code: str, request: Request) -> AnalyticsResponse:
         )
         ip = raw_ip
 
-    logger.info(f"Click captured from IP: {ip} (ipv4={ipv4 or 'none'})")
     country, city, geo_source = None, None, None
     if ip and _is_public_ip(ip):
         country, city, geo_source = await get_location(ip)
-    logger.info(f"Location resolved: {country}, {city} via {geo_source} for IP: {ip}")
 
     raw_ua = request.headers.get("user-agent", "")
     device, browser = None, None
