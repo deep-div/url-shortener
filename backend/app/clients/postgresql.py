@@ -14,7 +14,11 @@ engine = create_async_engine(
     DATABASE_URL,
     pool_size=5,
     max_overflow=5,
-    pool_timeout=10,
+    pool_timeout=-1,  # wait indefinitely for a free connection instead of raising
+                      # sqlalchemy.exc.TimeoutError — SQLAlchemy's own convention for
+                      # "no pool-wait timeout" is -1, not None (None is invalid here).
+                      # A caller now only ever sees a real DB/driver error, never a
+                      # pool-exhaustion timeout.
     pool_recycle=1800,
     connect_args={
         "ssl": "require",
