@@ -8,6 +8,13 @@ import { getUrlStats } from '../api/api.js';
 import { useClipboard } from '../hooks/useClipboard.js';
 import { useAnalyticsSocket } from '../hooks/useAnalyticsSocket.js';
 
+/** Strip the "Others" bucket from a name->count map (used for Countries/Cities). */
+function omitOthers(data) {
+  if (!data) return data;
+  const { Others, ...rest } = data;
+  return rest;
+}
+
 function BackIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -203,13 +210,13 @@ export default function AnalyticsPage() {
         <div className="analytics-grid-3">
           <MetricBars
             tabs={[
-              { label: 'Countries', data: by_country },
-              { label: 'Cities', data: by_city },
+              { label: 'Countries', data: omitOthers(by_country) },
+              { label: 'Cities', data: omitOthers(by_city) },
             ]}
             scroll
           />
-          <DonutChart title="Devices" data={by_device} />
-          <MetricBars title="Top Browsers" data={by_browser} scroll />
+          <DonutChart title="Top Devices" data={omitOthers(by_device)} />
+          <MetricBars title="Top Browsers" data={omitOthers(by_browser)} scroll />
         </div>
       </div>
     </div>
