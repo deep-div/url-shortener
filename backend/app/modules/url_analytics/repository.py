@@ -82,44 +82,40 @@ class UrlRepository:
         return {int(r.hour): r.clicks for r in result.all()}
 
     async def get_by_country(self, code: str) -> dict[str, int]:
-        country_col = func.coalesce(Analytics.country, "Others")
         result = await self.session.execute(
-            select(country_col.label("country"), func.count().label("clicks"))
-            .filter(Analytics.code == code)
-            .group_by(country_col)
+            select(Analytics.country.label("country"), func.count().label("clicks"))
+            .filter(Analytics.code == code, Analytics.country.isnot(None))
+            .group_by(Analytics.country)
         )
         return {r.country: r.clicks for r in result.all()}
 
     async def get_by_city(self, code: str) -> dict[str, int]:
-        city_col = func.coalesce(Analytics.city, "Others")
         result = await self.session.execute(
-            select(city_col.label("city"), func.count().label("clicks"))
-            .filter(Analytics.code == code)
-            .group_by(city_col)
+            select(Analytics.city.label("city"), func.count().label("clicks"))
+            .filter(Analytics.code == code, Analytics.city.isnot(None))
+            .group_by(Analytics.city)
         )
         return {r.city: r.clicks for r in result.all()}
 
     async def get_by_device(self, code: str) -> dict[str, int]:
-        device_col = func.coalesce(Analytics.device, "Others")
         result = await self.session.execute(
-            select(device_col.label("device"), func.count().label("clicks"))
-            .filter(Analytics.code == code)
-            .group_by(device_col)
+            select(Analytics.device.label("device"), func.count().label("clicks"))
+            .filter(Analytics.code == code, Analytics.device.isnot(None))
+            .group_by(Analytics.device)
         )
         return {r.device: r.clicks for r in result.all()}
 
     async def get_by_browser(self, code: str) -> dict[str, int]:
-        browser_col = func.coalesce(Analytics.browser, "Others")
         result = await self.session.execute(
-            select(browser_col.label("browser"), func.count().label("clicks"))
-            .filter(Analytics.code == code)
-            .group_by(browser_col)
+            select(Analytics.browser.label("browser"), func.count().label("clicks"))
+            .filter(Analytics.code == code, Analytics.browser.isnot(None))
+            .group_by(Analytics.browser)
         )
         return {r.browser: r.clicks for r in result.all()}
 
     async def get_unique_ips(self, code: str) -> list[str]:
         result = await self.session.execute(
-            select(UniqueIp.ip).filter(UniqueIp.code == code)
+            select(UniqueIp.ip).filter(UniqueIp.code == code, UniqueIp.ip.isnot(None))
         )
         return [r.ip for r in result.all()]
 

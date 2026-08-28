@@ -41,10 +41,14 @@ def _queue_click_increment(
     pipe.set(k["last_clicked_at"], clicked_at_iso)
     if ip:
         pipe.pfadd(k["unique_clicks"], ip)
-    pipe.hincrby(k["by_country"], country or "Others", 1)
-    pipe.hincrby(k["by_city"], city or "Others", 1)
-    pipe.hincrby(k["by_device"], device or "Others", 1)
-    pipe.hincrby(k["by_browser"], browser or "Others", 1)
+    if country:
+        pipe.hincrby(k["by_country"], country, 1)
+    if city:
+        pipe.hincrby(k["by_city"], city, 1)
+    if device:
+        pipe.hincrby(k["by_device"], device, 1)
+    if browser:
+        pipe.hincrby(k["by_browser"], browser, 1)
     pipe.hincrby(k["clicks_by_day"], date_str, 1)
     pipe.hincrby(k["peak_hours"], str(clicked_at.hour), 1)
 
