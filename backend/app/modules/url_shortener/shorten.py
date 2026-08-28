@@ -67,8 +67,6 @@ class UrlShortener:
         if existing:
             return existing
 
-        # cache miss (or Redis unavailable) — PostgreSQL is the source of truth
-        logger.warning(f"Redis cache miss for code: {code}, falling back to DB")
         return await self._resolve_stampede_guard(code)
 
     async def _resolve_stampede_guard(self, code: str) -> str | None:
@@ -96,7 +94,6 @@ class UrlShortener:
         existing = await _get_cache(f"code:{code}")
         if existing:
             return existing
-        logger.warning(f"Cache stampede guard timed out for code={code}, falling back to direct DB read")
         return await self._db_read(code)
 
     async def _db_read(self, code: str) -> str | None:
