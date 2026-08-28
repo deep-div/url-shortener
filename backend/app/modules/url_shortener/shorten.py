@@ -1,5 +1,6 @@
 import asyncio
 
+from redis.asyncio.lock import Lock
 from redis.exceptions import RedisError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,13 +69,43 @@ class UrlShortener:
 
         # cache miss (or Redis unavailable) — PostgreSQL is the source of truth
         logger.warning(f"Redis cache miss for code: {code}, falling back to DB")
+        return await self._resolve_stampede_guard(code)
+
+    async def _resolve_stampede_guard(self, code: str) -> str | None:
+        lock = Lock(redis_client, f"lock:code:{code}", timeout=10, blocking_timeout=10)
+
+        if await lock.acquire():
+            try:
+                existing = await _get_cache(f"code:{code}")
+                if existing:
+                    return existing
+                return await self._db_read_and_cache(code)
+            finally:
+                await lock.release()
+
+        # Didn't get the lock in time — the rebuild should be done (or nearly done) by now.
+        existing = await _get_cache(f"code:{code}")
+        if existing:
+            return existing
+        logger.warning(f"Cache stampede guard timed out for code={code}, falling back to direct DB read")
+        return await self._db_read(code)
+
+    async def _db_read(self, code: str) -> str | None:
         row = await self.repo.get_by_code(code)
         if row:
-            asyncio.create_task(_set_cache(row.long_url, code))
             return row.long_url
 
         logger.warning(f"Code not found in cache or DB: {code}")
         return None
+
+    async def _db_read_and_cache(self, code: str) -> str | None:
+        row = await self.repo.get_by_code(code)
+        if not row:
+            logger.warning(f"Code not found in cache or DB: {code}")
+            return None
+
+        await _set_cache(row.long_url, code)
+        return row.long_url
 
 
 async def _get_cache(key: str) -> str | None:
