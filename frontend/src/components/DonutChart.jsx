@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { formatCompactNumber } from '../utils/format.js';
 
 const COLORS = ['#6366F1', '#818CF8', '#A5B4FC', '#4F46E5', '#C7D2FE', '#4338CA'];
 
@@ -64,8 +65,8 @@ export default function DonutChart({ title, data }) {
             {chartData.map((item, i) => (
               <div key={item.name} className="donut-leg-row">
                 <span className="donut-leg-dot" style={{ background: COLORS[i % COLORS.length] }} />
-                <span className="donut-leg-name">{item.name || 'Unknown'}</span>
-                <span className="donut-leg-val">{item.value.toLocaleString()}</span>
+                <span className="donut-leg-name" title={item.name || 'Unknown'}>{item.name || 'Unknown'}</span>
+                <span className="donut-leg-val" title={item.value.toLocaleString()}>{formatCompactNumber(item.value)}</span>
               </div>
             ))}
           </div>

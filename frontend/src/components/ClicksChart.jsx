@@ -23,6 +23,25 @@ function formatYAxis(val) {
   return val;
 }
 
+// Rounds up to a "nice" 1/2/5-times-a-power-of-ten number so the axis top
+// isn't the raw data max (which produces an uneven trailing tick gap).
+function niceCeil(value) {
+  if (!value || value <= 0) return 10;
+  const exponent = Math.floor(Math.log10(value));
+  const magnitude = 10 ** exponent;
+  const fraction = value / magnitude;
+  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  return niceFraction * magnitude;
+}
+
+// Builds an evenly-spaced tick set [0, step, 2*step, 3*step, 4*step] whose
+// top always matches the axis domain max.
+function getYAxisTicks(maxValue) {
+  const domainMax = niceCeil(maxValue);
+  const step = domainMax / 4;
+  return { domainMax, ticks: [0, step, step * 2, step * 3, domainMax] };
+}
+
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -119,6 +138,9 @@ export default function ClicksChart({ data, peakHours }) {
   const activeData = isHours ? hoursData : data;
   const isEmpty = !activeData || activeData.length === 0 || (isHours && activeData.every(d => d.clicks === 0));
 
+  const maxClicks = activeData?.length ? Math.max(...activeData.map((d) => d.clicks ?? 0)) : 0;
+  const { domainMax, ticks: yTicks } = getYAxisTicks(maxClicks);
+
   const sharedAxes = isHours ? (
     <>
       <CartesianGrid stroke="none" vertical={false} horizontal={false} />
@@ -137,6 +159,8 @@ export default function ClicksChart({ data, peakHours }) {
         tickLine={false}
         allowDecimals={false}
         tickFormatter={formatYAxis}
+        domain={[0, domainMax]}
+        ticks={yTicks}
         width={56}
       />
     </>
@@ -157,6 +181,8 @@ export default function ClicksChart({ data, peakHours }) {
         tickLine={false}
         allowDecimals={false}
         tickFormatter={formatYAxis}
+        domain={[0, domainMax]}
+        ticks={yTicks}
         width={56}
       />
     </>

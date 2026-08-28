@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatCompactNumber } from '../utils/format.js';
 
 /**
  * Ranked horizontal-bar list. Renders raw counts pulled from the API — no
@@ -52,14 +53,14 @@ export default function MetricBars({ title, data, tabs, scroll = false }) {
         ) : (
           entries.map(([name, value]) => (
             <div key={name} className="metric-row">
-              <span className="metric-name">{name || 'Unknown'}</span>
+              <span className="metric-name" title={name || 'Unknown'}>{name || 'Unknown'}</span>
               <span className="metric-track">
                 <span
                   className="metric-fill"
                   style={{ width: max ? `${(value / max) * 100}%` : '0%' }}
                 />
               </span>
-              <span className="metric-value">{value.toLocaleString()}</span>
+              <span className="metric-value" title={value.toLocaleString()}>{formatCompactNumber(value)}</span>
             </div>
           ))
         )}
