@@ -55,7 +55,7 @@ async def start_consumer() -> None:
                     await consumer.commit()
                 except Exception as e:
                     offsets = {
-                        f"partition_{tp.partition}": consumer.position(tp)
+                        f"partition_{tp.partition}": await consumer.position(tp)
                         for tp in consumer.assignment()
                     }
                     logger.error(
@@ -74,8 +74,15 @@ async def start_consumer() -> None:
                         }
                         for payload in buffer
                     ]
-                    await send_to_dlq(dlq_messages)
-                    await consumer.commit()
+                    try:
+                        await send_to_dlq(dlq_messages)
+                        await consumer.commit()
+                    except Exception:
+                        logger.error(
+                            f"Failed to push {len(dlq_messages)} messages to DLQ — "
+                            "offsets NOT committed, messages will be reprocessed",
+                            exc_info=True,
+                        )
                 finally:
                     buffer = []
                     deadline = None
