@@ -12,6 +12,10 @@ function formatDay(val) {
 }
 
 function formatYAxis(val) {
+  if (val >= 1_000_000) {
+    const m = val / 1_000_000;
+    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
+  }
   if (val >= 1000) {
     const k = val / 1000;
     return `${Number.isInteger(k) ? k : k.toFixed(1)}K`;
@@ -133,7 +137,7 @@ export default function ClicksChart({ data, peakHours }) {
         tickLine={false}
         allowDecimals={false}
         tickFormatter={formatYAxis}
-        width={48}
+        width={56}
       />
     </>
   ) : (
@@ -153,7 +157,7 @@ export default function ClicksChart({ data, peakHours }) {
         tickLine={false}
         allowDecimals={false}
         tickFormatter={formatYAxis}
-        width={48}
+        width={56}
       />
     </>
   );
