@@ -8,8 +8,8 @@ from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_batch
 from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
 
-BATCH_SIZE = 20000
-BATCH_TIMEOUT_SECS = 15
+BATCH_SIZE = 10000
+BATCH_TIMEOUT_SECS = 10
 
 
 async def start_consumer() -> None:

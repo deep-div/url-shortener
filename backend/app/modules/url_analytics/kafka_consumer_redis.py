@@ -8,7 +8,7 @@ from app.core.logging import logger
 from app.modules.url_analytics.analytics import run_url_analytics_redis
 from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
 
-BATCH_SIZE = 3500
+BATCH_SIZE = 3000
 BATCH_TIMEOUT_SECS = 2
 
 
