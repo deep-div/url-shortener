@@ -1,0 +1,58 @@
+_format_version: "3.0"
+_transform: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Kong declarative (DB-less) config — Step 1: reverse proxy only.
+# No auth / rate-limiting / plugins yet — routing only, mirrors what
+# nginx used to do with proxy_pass.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── FastAPI backend — normal requests ───────────────────────────────────
+  - name: backend-service
+    url: http://127.0.0.1:8000
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    routes:
+      - name: health-route
+        paths: ["/health"]
+        strip_path: false
+
+      - name: api-route
+        paths: ["/v1"]
+        strip_path: false
+
+      # Short-code redirects, e.g. /abc123 — single path segment only,
+      # so it doesn't swallow multi-segment SPA routes like /dashboard/settings.
+      - name: shortcode-route
+        paths: ["~/^/[a-zA-Z0-9_-]+$"]
+        strip_path: false
+        regex_priority: 100
+
+  # ── FastAPI backend — SSE live analytics stream ─────────────────────────
+  # Separate service so it can get a much longer read_timeout without
+  # affecting normal API calls.
+  - name: backend-sse-service
+    url: http://127.0.0.1:8000
+    connect_timeout: 60000
+    write_timeout: 3600000
+    read_timeout: 3600000
+    routes:
+      - name: sse-route
+        paths: ["/v1/analytics/live"]
+        strip_path: false
+        regex_priority: 200
+
+  # ── Nginx static file server — built frontend (dist/) ───────────────────
+  - name: frontend-service
+    url: http://127.0.0.1:3000
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    routes:
+      # Catch-all — anything not matched above (SPA routes, JS/CSS assets, etc.)
+      - name: frontend-route
+        paths: ["/"]
+        strip_path: false

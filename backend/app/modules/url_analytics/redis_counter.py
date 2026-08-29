@@ -4,8 +4,7 @@ from app.modules.url_analytics.schema import (
     UrlStatsResponse, LinkInfo, SummaryInfo, ClicksByDayItem,
 )
 
-TTL_SECONDS = 60 * 60 * 24  # 1 day — evict stale URL counters automatically
-
+TTL_SECONDS = 60 * 60 * 24 * 30  # 30 days — evict stale URL counters automatically
 
 def _keys(code: str) -> dict[str, str]:
     p = f"stats:{code}"

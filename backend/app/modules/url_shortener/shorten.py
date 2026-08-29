@@ -12,7 +12,7 @@ from app.modules.url_shortener.schema import ShortenResponse
 from app.modules.url_shortener.generate_code import generate_code
 from app.modules.url_shortener.repository import UrlRepository
 
-REDIS_TTL = 60 * 60 * 24            # 1 day
+REDIS_TTL = 60 * 60 * 24 * 30  # 30 days
 BASE_URL = settings.BASE_URL.rstrip("/")
 
 ## Generate code 
