@@ -25,6 +25,15 @@ services:
         paths: ["/v1"]
         strip_path: false
 
+      # Internal ops/debug endpoint (Kafka consumer lag) — not part of the
+      # public product surface, so it's locked down with key-auth below.
+      # Needs a dedicated route (higher priority than api-route) so the
+      # plugin can be scoped to just this path.
+      - name: kafka-lag-route
+        paths: ["/v1/kafka/lag"]
+        strip_path: false
+        regex_priority: 50
+
       # Short-code redirects, e.g. /abc123 — single path segment only,
       # so it doesn't swallow multi-segment SPA routes like /dashboard/settings.
       - name: shortcode-route
@@ -84,14 +93,13 @@ plugins:
       size_unit: megabytes
       require_content_length: false
 
-  # ── Rate limiting — 100 req/min per route, per client IP ─────────────────
   # "local" policy: counters kept in-memory per Kong node (no Redis/DB
   # dependency — fits the DB-less deployment). health-route is excluded
   # since it's just used for container/uptime checks.
   - name: rate-limiting
     route: api-route
     config:
-      minute: 100
+      minute: 10000
       policy: local
       fault_tolerant: true
       hide_client_headers: false
@@ -99,7 +107,7 @@ plugins:
   - name: rate-limiting
     route: shortcode-route
     config:
-      minute: 100
+      minute: 10000
       policy: local
       fault_tolerant: true
       hide_client_headers: false
@@ -107,7 +115,7 @@ plugins:
   - name: rate-limiting
     route: sse-route
     config:
-      minute: 100
+      minute: 10000
       policy: local
       fault_tolerant: true
       hide_client_headers: false
@@ -121,3 +129,28 @@ plugins:
           - "X-Frame-Options: SAMEORIGIN"
           - "Referrer-Policy: strict-origin-when-cross-origin"
           - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+
+  # ── Lock down the internal Kafka-lag debug endpoint ───────────────────────
+  # Only whoever holds the API key (you) can call this — never embedded in
+  # any frontend/client code, so it stays a real secret. Pass it as:
+  #   curl -H "apikey: <key>" https://<host>/v1/kafka/lag
+  - name: key-auth
+    route: kafka-lag-route
+    config:
+      key_names: ["apikey"]
+      hide_credentials: true
+
+  # Extra-strict limit on this internal debug endpoint — it's only ever
+  # called manually by you, never by real product traffic.
+  - name: rate-limiting
+    route: kafka-lag-route
+    config:
+      minute: 10
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+
+consumers:
+  - username: ops-admin
+    keyauth_credentials:
+      - key: "9f1c7e4b8d3a2c6f5e1a9b7c4d8f2e6a1c3b5d7e9f0a2b4c6d8e1f3a5b7c9d2e4f6a8c1b3d5e7f9a0c2e4d6f8b1a3c5e7d9f0a2b4c6d8e1f3a5b7c9d2e4f6"
