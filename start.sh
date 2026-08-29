@@ -6,7 +6,6 @@ cd /app/backend
 uvicorn app.main:app --host 127.0.0.1 --port 8000 &
 
 echo "Starting nginx (static frontend server)..."
-# Use the absolute path — Kong's image bundles its own OpenResty "nginx"
 # binary at /usr/local/bin/nginx which shadows the real apt-installed
 # nginx at /usr/sbin/nginx earlier in $PATH.
 /usr/sbin/nginx -g "daemon off;" &
