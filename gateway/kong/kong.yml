@@ -27,7 +27,7 @@ services:
       # Short-code redirects, e.g. /abc123 — single path segment only,
       # so it doesn't swallow multi-segment SPA routes like /dashboard/settings.
       - name: shortcode-route
-        paths: ["~/^/[a-zA-Z0-9_-]+$"]
+        paths: ["~/[a-zA-Z0-9_-]+$"]
         strip_path: false
         regex_priority: 100
 

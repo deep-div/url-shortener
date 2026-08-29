@@ -2,7 +2,7 @@ import datetime
 import pytz
 
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from app.clients.postgresql import get_db
@@ -14,12 +14,12 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health_check(db: Session = Depends(get_db)):
+async def health_check(db: AsyncSession = Depends(get_db)):
     status = {"status": "ok", "timestamp": datetime.datetime.now(IST).isoformat()}
 
     # check PostgreSQL
     try:
-        db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
         status["postgresql"] = "ok"
     except Exception as e:
         status["postgresql"] = f"error: {str(e)}"
@@ -27,7 +27,7 @@ def health_check(db: Session = Depends(get_db)):
 
     # check Redis
     try:
-        redis_client.ping()
+        await redis_client.ping()
         status["redis"] = "ok"
     except Exception as e:
         status["redis"] = f"error: {str(e)}"
