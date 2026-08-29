@@ -2,7 +2,7 @@
 
 A fast, minimal URL shortener with click analytics. Paste a long URL, get a short one, and track who clicked it.
 
-[app.webm](https://github.com/user-attachments/assets/8fa95e97-3497-4bca-bd36-2d52b51f414c)
+[video.webm](https://github.com/user-attachments/assets/f9d25fce-20dc-4ea4-9171-508fcadb8051)
 
 **Home**
 
