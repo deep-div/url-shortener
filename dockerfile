@@ -29,8 +29,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     && rm -rf /var/lib/apt/lists/*
 
-# Kong runtime config — DB-less (declarative), listens on 0.0.0.0:80,
-# Admin API restricted to localhost only.
+# Kong runtime config — DB-less (declarative), listens on 0.0.0.0:80.
+# TLS is terminated upstream by Render's edge proxy (deployment target),
+# which forwards plain HTTP to this container — so Kong only needs a
+# plaintext listener here. Admin API restricted to localhost only.
 ENV KONG_DATABASE=off
 ENV KONG_DECLARATIVE_CONFIG=/etc/kong/kong.yml
 ENV KONG_PROXY_LISTEN=0.0.0.0:80

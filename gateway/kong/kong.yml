@@ -2,9 +2,10 @@ _format_version: "3.0"
 _transform: true
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Kong declarative (DB-less) config — Step 1: reverse proxy only.
-# No auth / rate-limiting / plugins yet — routing only, mirrors what
-# nginx used to do with proxy_pass.
+# Kong declarative (DB-less) config — reverse proxy + baseline security headers.
+# No auth / rate-limiting yet. TLS is terminated by Render's edge proxy
+# (deployment target) — Kong only handles plain HTTP internally, so no
+# ssl/https_redirect config is needed here.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:
@@ -56,3 +57,67 @@ services:
       - name: frontend-route
         paths: ["/"]
         strip_path: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Security response headers for API traffic. The static frontend already
+# gets these from nginx/default.conf — these apply the same baseline to
+# JSON/SSE responses coming out of the FastAPI backend.
+# ─────────────────────────────────────────────────────────────────────────────
+plugins:
+  - name: response-transformer
+    service: backend-service
+    config:
+      add:
+        headers:
+          - "X-Content-Type-Options: nosniff"
+          - "X-Frame-Options: SAMEORIGIN"
+          - "Referrer-Policy: strict-origin-when-cross-origin"
+          - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+
+  # Caps request body size on the JSON API to guard against oversized
+  # payloads (e.g. someone POSTing a multi-GB body to /v1). Scoped to the
+  # route rather than the whole service so it doesn't affect health checks.
+  - name: request-size-limiting
+    route: api-route
+    config:
+      allowed_payload_size: 1
+      size_unit: megabytes
+      require_content_length: false
+
+  # ── Rate limiting — 100 req/min per route, per client IP ─────────────────
+  # "local" policy: counters kept in-memory per Kong node (no Redis/DB
+  # dependency — fits the DB-less deployment). health-route is excluded
+  # since it's just used for container/uptime checks.
+  - name: rate-limiting
+    route: api-route
+    config:
+      minute: 100
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+
+  - name: rate-limiting
+    route: shortcode-route
+    config:
+      minute: 100
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+
+  - name: rate-limiting
+    route: sse-route
+    config:
+      minute: 100
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+
+  - name: response-transformer
+    service: backend-sse-service
+    config:
+      add:
+        headers:
+          - "X-Content-Type-Options: nosniff"
+          - "X-Frame-Options: SAMEORIGIN"
+          - "Referrer-Policy: strict-origin-when-cross-origin"
+          - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
