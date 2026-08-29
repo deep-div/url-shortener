@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
 
     BASE_URL: str
-    WORKER_ID: int
+    WORKER_ID: int = 1
 
     LOG_LEVEL: str
     ENVIRONMENT: str
