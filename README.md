@@ -2,8 +2,8 @@
 
 ## Key Features
 * **High Performance:** Designed to scale up to **100,000 requests per minute**.
-* **URL Shortening:** Quickly converts long URLs into short, shareable links.
-* **Click Analytics:** Tracks total clicks, unique visitors, country/city, device, browser, OS, and click trends by day and hour.
+* **URL Shortening:** Quickly converts long URLs into short.
+* **Click Analytics:** Tracks total clicks, unique visitors, country/city, device, browser, and click trends by day and hour.
 * **Scalable Architecture:** Uses caching, asynchronous event processing, and distributed services to handle high request volumes efficiently.
 
 **Architecture**
@@ -22,4 +22,3 @@
 
 ![Analytics page](assests/analytics.png)
 
-Tracks total clicks, unique visitors, clicks by country/city, device, browser, OS, and click trends by day and hour.
