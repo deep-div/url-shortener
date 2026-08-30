@@ -639,7 +639,7 @@ img, svg { display: block; }
   .analytics-page { padding: 32px 0 48px; }
   .analytics-grid-3 { grid-template-columns: 1fr; }
   .analytics-grid-3 > :first-child { grid-column: auto; }
-  .metric-card { height: auto; min-height: 280px; }
+  .metric-card { height: 280px; }
   .chart-card { padding: 16px; }
   .donut-body { flex-direction: column; align-items: center; gap: 20px; }
   .donut-viz { flex: 0 0 160px; width: 160px; height: 160px; overflow: visible; }
@@ -655,7 +655,7 @@ img, svg { display: block; }
   .dash-short-link { font-size: 16px; word-break: break-all; }
   .dash-long-url { font-size: 12px; }
   .analytics-back { margin-bottom: 20px; }
-  .metric-card { padding: 16px; min-height: 240px; }
+  .metric-card { padding: 16px; height: 240px; }
   .metric-card-head { flex-direction: column; align-items: flex-start; gap: 8px; }
   .metric-name { flex-basis: 72px; width: 72px; font-size: 12px; }
   .metric-row { gap: 8px; }
