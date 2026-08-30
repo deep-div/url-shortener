@@ -173,8 +173,17 @@ async def redis_cache(code: str, db: AsyncSession) -> UrlStatsResponse:
     return await cache_stampede_guard(code, db)
 
 
+def _cap_top_n(d: dict, n: int = 20) -> dict:
+    return dict(list(d.items())[:n])
+
+
 async def get_url_stats(code: str, db: AsyncSession) -> UrlStatsResponse:
-    return await redis_cache(code, db)
+    response = await redis_cache(code, db)
+    return response.model_copy(update={
+        "by_country": _cap_top_n(response.by_country),
+        "by_city": _cap_top_n(response.by_city),
+        "by_browser": _cap_top_n(response.by_browser),
+    })
 
 async def run_url_analytics_redis(payloads: list[dict]) -> None:
     try:

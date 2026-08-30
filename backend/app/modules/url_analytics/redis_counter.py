@@ -182,4 +182,9 @@ async def get_live_snapshot(code: str) -> UrlStatsResponse:
     exact same shape as the dashboard's GET response (UrlStatsResponse) —
     once increment_clicks_batch has run, Redis holds the full up-to-date picture,
     so this just re-reads the cache."""
-    return await get_cached_stats(code)
+    response = await get_cached_stats(code)
+    return response.model_copy(update={
+        "by_country": dict(list(response.by_country.items())[:20]),
+        "by_city": dict(list(response.by_city.items())[:20]),
+        "by_browser": dict(list(response.by_browser.items())[:20]),
+    })
