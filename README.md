@@ -1,6 +1,10 @@
 # URL Shortener
 
-A fast, minimal URL shortener with click analytics. Paste a long URL, get a short one, and track who clicked it.
+## Key Features
+* **High Performance:** Designed to scale up to **100,000 requests per minute**.
+* **URL Shortening:** Quickly converts long URLs into short, shareable links.
+* **Click Analytics:** Tracks total clicks, unique visitors, country/city, device, browser, OS, and click trends by day and hour.
+* **Scalable Architecture:** Uses caching, asynchronous event processing, and distributed services to handle high request volumes efficiently.
 
 **Architecture**
 
