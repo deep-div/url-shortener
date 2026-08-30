@@ -8,7 +8,7 @@
 
 **Architecture**
 
-![Architecture](assests/architecture.gif)
+![Architecture](assets/architecture.gif)
 
 **Video**
 
@@ -16,9 +16,9 @@
 
 **Home**
 
-![Home page](assests/home.png)
+![Home page](assets/home.png)
 
 **Analytics**
 
-![Analytics page](assests/analytics.png)
+![Analytics page](assets/analytics.png)
 
