@@ -1,30 +1,30 @@
 <mxfile host="65bd71144e">
     <diagram id="url-shortener-hld" name="URL Shortener - HLD">
-        <mxGraphModel dx="1202" dy="1013" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+        <mxGraphModel dx="1030" dy="869" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-1" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Kafka Bus&lt;/b&gt;&lt;div&gt;&lt;b&gt;Capture Click&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&amp;nbsp;Events&lt;/b&gt;&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-1" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];movable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b&gt;Kafka Bus&lt;/b&gt;&lt;div&gt;&lt;b&gt;Capture Click&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;&amp;nbsp;Events&lt;/b&gt;&lt;/div&gt;" vertex="1">
                     <mxGeometry x="1250" y="1112" as="geometry">
                         <mxPoint x="10" y="8" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=none;verticalAlign=top;fontSize=13;fontStyle=2;fontColor=#666666;arcSize=3;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=none;verticalAlign=top;fontSize=13;fontStyle=2;fontColor=#666666;arcSize=3;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="" vertex="1">
                     <mxGeometry height="530" width="590" x="630" y="762" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-3" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/googlechrome.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;labelBorderColor=none;" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; User / Browser" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-3" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/googlechrome.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;labelBorderColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; User / Browser" vertex="1">
                     <mxGeometry height="72" width="270" x="780" y="630" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-4" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=56;image=https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/kong.svg;imageWidth=40;imageHeight=40;imageAlign=left;imageVerticalAlign=middle;" value="Kong API Gateway&lt;br&gt;• Reverse proxy • TLS&amp;nbsp;&lt;br&gt;• Rate limiting • Security headers&lt;div&gt;• Ports 80 / 443 (public entry)&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-4" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=56;image=https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/kong.svg;imageWidth=40;imageHeight=40;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Kong API Gateway&lt;br&gt;• Reverse proxy • TLS&amp;nbsp;&lt;br&gt;• Rate limiting • Security headers&lt;div&gt;• Ports 80 / 443 (public entry)&lt;/div&gt;" vertex="1">
                     <mxGeometry height="92" width="330" x="750" y="782" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-5" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=light-dark(#9673A6,#EDEDED);strokeWidth=2;flowAnimation=1;" target="9Fmb19QeljkxyfAj1GBo-25" value="">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-5" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=light-dark(#9673A6,#EDEDED);strokeWidth=2;flowAnimation=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-25" value="">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-6" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=56;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg;imageWidth=40;imageHeight=40;imageAlign=left;imageVerticalAlign=middle;" value="&amp;nbsp; &amp;nbsp;Nginx&amp;nbsp;Serves React" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-6" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=56;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg;imageWidth=40;imageHeight=40;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&amp;nbsp; &amp;nbsp;Nginx&amp;nbsp;Serves React" vertex="1">
                     <mxGeometry height="110" width="230" x="670" y="962" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-7" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#CC0000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;flowAnimation=1;shadow=1;curved=1;" target="9Fmb19QeljkxyfAj1GBo-15">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-7" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=block;startFill=1;strokeWidth=2;strokeColor=#CC0000;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;flowAnimation=1;shadow=1;curved=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-15">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1190" y="872"/>
@@ -33,12 +33,12 @@
                         <mxPoint x="1190" y="923.8200000000002" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-8" connectable="0" parent="9Fmb19QeljkxyfAj1GBo-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=default;" value="&lt;span style=&quot;font-weight: 700;&quot;&gt;&amp;nbsp; cache lookup&lt;/span&gt;&lt;br style=&quot;font-weight: 700;&quot;&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;&amp;nbsp;URL ⇄ code&lt;/span&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-8" connectable="0" parent="9Fmb19QeljkxyfAj1GBo-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=default;movable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;span style=&quot;font-weight: 700;&quot;&gt;&amp;nbsp; cache lookup&lt;/span&gt;&lt;br style=&quot;font-weight: 700;&quot;&gt;&lt;span style=&quot;font-weight: 700;&quot;&gt;&amp;nbsp;URL ⇄ code&lt;/span&gt;" vertex="1">
                     <mxGeometry relative="1" x="0.1191" as="geometry">
                         <mxPoint x="64" y="-20" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-9" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#D79B00;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=-0.008;entryY=0.434;entryDx=0;entryDy=0;dashed=1;comic=0;orthogonal=0;movable=1;flowAnimation=1;shadow=1;curved=1;entryPerimeter=0;" target="9Fmb19QeljkxyfAj1GBo-18">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-9" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#D79B00;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=-0.008;entryY=0.434;entryDx=0;entryDy=0;dashed=1;comic=0;orthogonal=0;movable=0;flowAnimation=1;shadow=1;curved=1;entryPerimeter=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-18">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1160" y="1152"/>
@@ -46,30 +46,30 @@
                         <mxPoint x="1080" y="1062" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-10" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6C8EBF;strokeWidth=2;startArrow=classic;startFill=1;flowAnimation=1;shadow=1;" target="9Fmb19QeljkxyfAj1GBo-16">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-10" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6C8EBF;strokeWidth=2;startArrow=classic;startFill=1;flowAnimation=1;shadow=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-16">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-11" connectable="0" parent="9Fmb19QeljkxyfAj1GBo-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1" value="store/ fetch&amp;nbsp;&lt;div&gt;URLs&lt;br&gt;&amp;amp; analytics&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-11" connectable="0" parent="9Fmb19QeljkxyfAj1GBo-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontStyle=1;movable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="store/ fetch&amp;nbsp;&lt;div&gt;URLs&lt;br&gt;&amp;amp; analytics&lt;/div&gt;" vertex="1">
                     <mxGeometry relative="1" x="-0.1602" as="geometry">
                         <mxPoint x="17" y="-34" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-12" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=58;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg;imageWidth=42;imageHeight=42;imageAlign=left;imageVerticalAlign=middle;" value="FastAPI Backend Services&lt;br&gt;• URL Shorten&lt;br&gt;• URL Analytics (LIVE SSE)" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-12" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=58;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg;imageWidth=42;imageHeight=42;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="FastAPI Backend Services&lt;br&gt;• URL Shorten&lt;br&gt;• URL Analytics (LIVE SSE)" vertex="1">
                     <mxGeometry height="110" width="230" x="940" y="962" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-13" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=50;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;" value="Kafka Consumer (Redis group)&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;Real time counters in Redis&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;SSE pub/sub&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-13" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=50;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Kafka Consumer (Redis group)&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;Real time counters in Redis&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;SSE pub/sub&lt;/div&gt;" vertex="1">
                     <mxGeometry height="60" width="235" x="940" y="1212" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-14" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=50;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;" value="Kafka Consumer (DB group)&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;Persist click records to DB" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-14" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=50;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg;imageWidth=36;imageHeight=36;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Kafka Consumer (DB group)&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;Persist click records to DB" vertex="1">
                     <mxGeometry height="60" width="235" x="940" y="1142" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-15" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;" value="Redis Cloud&lt;br&gt;• Real-time counters&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;• pub/sub Connections&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;Cache&lt;/div&gt;&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-15" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Redis Cloud&lt;br&gt;• Real-time counters&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;• pub/sub Connections&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;Cache&lt;/div&gt;&lt;/div&gt;" vertex="1">
                     <mxGeometry height="82" width="220" x="1330" y="829.38" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-16" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;" value="PostgreSQL&amp;nbsp;&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;urls&amp;nbsp;&lt;div&gt;• analytics&amp;nbsp;&lt;/div&gt;&lt;div&gt;• unique_ips&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-16" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="PostgreSQL&amp;nbsp;&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;urls&amp;nbsp;&lt;div&gt;• analytics&amp;nbsp;&lt;/div&gt;&lt;div&gt;• unique_ips&lt;/div&gt;" vertex="1">
                     <mxGeometry height="82" width="220" x="1335" y="975" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-17" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-18" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673A6;strokeWidth=2;exitX=0;exitY=0.75;exitDx=0;exitDy=0;dashed=1;flowAnimation=1;shadow=1;curved=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="9Fmb19QeljkxyfAj1GBo-13">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-17" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-18" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9673A6;strokeWidth=2;exitX=0;exitY=0.75;exitDx=0;exitDy=0;dashed=1;flowAnimation=1;shadow=1;curved=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-13">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1270" y="1242"/>
@@ -77,15 +77,15 @@
                         <mxPoint x="1190" y="1242" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-18" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachekafka/apachekafka-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;" value="Kafka Producer&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;Event streaming&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;topic: url-clicks &amp;amp; dlq-log&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-18" parent="1" style="shape=label;html=1;whiteSpace=wrap;rounded=1;arcSize=10;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=52;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachekafka/apachekafka-original.svg;imageWidth=38;imageHeight=38;imageAlign=left;imageVerticalAlign=middle;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Kafka Producer&lt;br&gt;&lt;div&gt;&lt;span style=&quot;font-size: 12px; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;•&amp;nbsp;&lt;/span&gt;Event streaming&lt;br&gt;&lt;span style=&quot;font-size: 12px;&quot;&gt;•&amp;nbsp;&lt;/span&gt;topic: url-clicks &amp;amp; dlq-log&lt;/div&gt;" vertex="1">
                     <mxGeometry height="82" width="220" x="1330" y="1115.38" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-19" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#333333;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;" target="9Fmb19QeljkxyfAj1GBo-4" value="HTTPS (80/443)&#xa;all requests">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-19" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#333333;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-4" value="HTTPS (80/443)&#xa;all requests">
                     <mxGeometry relative="1" x="-0.0204" as="geometry">
                         <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-20" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#d79b00;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="9Fmb19QeljkxyfAj1GBo-6" value="Static&lt;br&gt;(HTML/JS/CSS)">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-20" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#d79b00;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-6" value="Static&lt;br&gt;(HTML/JS/CSS)">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="915" y="922"/>
@@ -94,7 +94,7 @@
                         <mxPoint x="785.04" y="952" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-21" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#d6b656;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;" target="9Fmb19QeljkxyfAj1GBo-12" value="Backend&amp;nbsp;&lt;div&gt;Server&lt;/div&gt;">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-21" edge="1" parent="1" source="9Fmb19QeljkxyfAj1GBo-4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=classic;fontSize=12;strokeColor=#d6b656;strokeWidth=2;fontStyle=1;flowAnimation=1;shadow=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-12" value="Backend&amp;nbsp;&lt;div&gt;Server&lt;/div&gt;">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="915" y="922"/>
@@ -102,25 +102,25 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;align=left;verticalAlign=middle;fontSize=11;spacingLeft=10;fontStyle=1" value="Key Flows:&#xa;1) Shorten:   User → Kong → FastAPI → Redis (cache) + PostgreSQL&#xa;2) Redirect:  User → Kong → FastAPI → 302 redirect;  async click event → Kafka → consumers → Redis / PostgreSQL&#xa;3) Analytics: React → Kong → FastAPI → PostgreSQL;  live updates via Redis pub/sub (SSE)" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#cccccc;align=left;verticalAlign=middle;fontSize=11;spacingLeft=10;fontStyle=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Key Flows:&#xa;1) Shorten:   User → Kong → FastAPI → Redis (cache) + PostgreSQL&#xa;2) Redirect:  User → Kong → FastAPI → 302 redirect;  async click event → Kafka → consumers → Redis / PostgreSQL&#xa;3) Analytics: React → Kong → FastAPI → PostgreSQL;  live updates via Redis pub/sub (SSE)" vertex="1">
                     <mxGeometry height="70" width="650" x="630" y="1300" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-23" parent="1" style="shape=image;html=1;verticalLabelPosition=middle;verticalAlign=middle;labelBackgroundColor=#f5f5f5;fontSize=14;fontStyle=1;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg;align=left;labelPosition=right;" value="Docker" vertex="1">
-                    <mxGeometry height="60" width="100" x="640" y="702" as="geometry"/>
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-23" parent="1" style="shape=image;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#f5f5f5;fontSize=14;fontStyle=1;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg;align=center;labelPosition=center;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="Docker" vertex="1">
+                    <mxGeometry height="40" width="90" x="1130" y="769.38" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-24" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;innerLoopWaypoints=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;flowAnimation=1;shadow=1;">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-24" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;innerLoopWaypoints=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;flowAnimation=1;shadow=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="1445" y="1239.38" as="sourcePoint"/>
                         <mxPoint x="1445" y="1239.38" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-25" parent="1" style="whiteSpace=wrap;html=1;align=left;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;arcSize=8;fontStyle=1;spacingLeft=56;textShadow=1;labelBorderColor=light-dark(#cce5ff, #ededed);fillStyle=solid;strokeWidth=1;" value="" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-25" parent="1" style="whiteSpace=wrap;html=1;align=left;fillColor=#e1d5e7;strokeColor=#9673a6;rounded=1;arcSize=8;fontStyle=1;spacingLeft=56;textShadow=1;labelBorderColor=light-dark(#cce5ff, #ededed);fillStyle=solid;strokeWidth=1;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="" vertex="1">
                     <mxGeometry height="95" width="230" x="670" y="1162" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-26" parent="1" style="shape=image;html=1;verticalLabelPosition=middle;verticalAlign=middle;labelBackgroundColor=none;fontSize=10;fontStyle=1;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg;align=left;labelPosition=right;imageBorder=none;labelBorderColor=none;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;React (Vite)&lt;/font&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-26" parent="1" style="shape=image;html=1;verticalLabelPosition=middle;verticalAlign=middle;labelBackgroundColor=none;fontSize=10;fontStyle=1;image=https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg;align=left;labelPosition=right;imageBorder=none;labelBorderColor=none;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;&amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp; &amp;nbsp;React (Vite)&lt;/font&gt;" vertex="1">
                     <mxGeometry height="50" width="50" x="690" y="1182" as="geometry"/>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-27" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.014;entryY=0.61;entryDx=0;entryDy=0;strokeColor=#9673A6;strokeWidth=2;dashed=1;flowAnimation=1;shadow=1;curved=1;entryPerimeter=0;" target="9Fmb19QeljkxyfAj1GBo-14">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-27" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.014;entryY=0.61;entryDx=0;entryDy=0;strokeColor=#9673A6;strokeWidth=2;dashed=1;flowAnimation=1;shadow=1;curved=1;entryPerimeter=0;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" target="9Fmb19QeljkxyfAj1GBo-14">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1275" y="1177"/>
@@ -129,12 +129,12 @@
                         <mxPoint x="1180" y="1177" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-28" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;Kafka&amp;nbsp;&lt;/b&gt;&lt;div&gt;&lt;b&gt;Consumers&lt;/b&gt;&lt;/div&gt;" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-28" connectable="0" parent="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];movable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="&lt;b&gt;Kafka&amp;nbsp;&lt;/b&gt;&lt;div&gt;&lt;b&gt;Consumers&lt;/b&gt;&lt;/div&gt;" vertex="1">
                     <mxGeometry x="1250" y="1182" as="geometry">
                         <mxPoint x="10" y="8" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9Fmb19QeljkxyfAj1GBo-29" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1a1a1a;" value="URL Shortener - High Level Design (HLD)" vertex="1">
+                <mxCell id="9Fmb19QeljkxyfAj1GBo-29" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;fontColor=#1a1a1a;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;" value="URL Shortener - High Level Design (HLD)" vertex="1">
                     <mxGeometry height="40" width="1080" x="550" y="560" as="geometry"/>
                 </mxCell>
             </root>
