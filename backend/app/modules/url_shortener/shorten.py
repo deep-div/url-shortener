@@ -12,7 +12,7 @@ from app.modules.url_shortener.schema import ShortenResponse
 from app.modules.url_shortener.generate_code import generate_code
 from app.modules.url_shortener.repository import UrlRepository
 
-REDIS_TTL = 60 * 60 * 24 * 30  # 30 days
+REDIS_TTL = 60 * 60 * 24 * 365
 BASE_URL = settings.BASE_URL.rstrip("/")
 
 ## Generate code 
@@ -114,9 +114,10 @@ class UrlShortener:
         return row.long_url
 
 
-async def _get_cache(key: str) -> str | None:
+async def _get_cache(key: str, ttl: int = REDIS_TTL) -> str | None:
     try:
-        return await redis_client.get(key)
+        # GETEX reads the value and restates its TTL in one round trip, so
+        return await redis_client.getex(key, ex=ttl)
     except RedisError as e:
         logger.warning(f"Redis unavailable while reading {key}, falling back to DB. Error: {e}")
         return None

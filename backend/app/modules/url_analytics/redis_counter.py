@@ -4,7 +4,7 @@ from app.modules.url_analytics.schema import (
     UrlStatsResponse, LinkInfo, SummaryInfo, ClicksByDayItem,
 )
 
-TTL_SECONDS = 60 * 60 * 24 * 30  # 30 days — evict stale URL counters automatically
+TTL_SECONDS = 60 * 60 * 24 * 365  # evict stale URL counters automatically
 
 def _keys(code: str) -> dict[str, str]:
     p = f"stats:{code}"
@@ -105,7 +105,11 @@ async def get_cached_stats(code: str) -> UrlStatsResponse:
     pipe.hgetall(k["by_browser"])
     pipe.hgetall(k["clicks_by_day"])
     pipe.hgetall(k["peak_hours"])
+    # Reading the dashboard counts as activity too — restate every key's TTL
+    for key in k.values():
+        pipe.expire(key, TTL_SECONDS)
 
+    results = await pipe.execute()
     (
         link,
         total_clicks,
@@ -117,7 +121,7 @@ async def get_cached_stats(code: str) -> UrlStatsResponse:
         by_browser,
         clicks_by_day,
         peak_hours,
-    ) = await pipe.execute()
+    ) = results[:10]
 
     by_country = {c: int(v) for c, v in by_country.items()}
     by_city = {c: int(v) for c, v in by_city.items()}
