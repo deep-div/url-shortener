@@ -5,4 +5,4 @@
 # Exclude the backend (Python) service from GitHub's Linguist language stats
 # on the repo overview page. This only affects language detection/diff
 # collapsing metadata - it does not modify, hide, or delete any files.
-backend/** linguist-vendored
+backend/** linguist-vendored 
