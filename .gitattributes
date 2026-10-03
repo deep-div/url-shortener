@@ -10,10 +10,10 @@ backend/alembic/** linguist-vendored
 backend/app/api/** linguist-vendored
 backend/app/clients/** linguist-vendored
 backend/app/core/** linguist-vendored
-backend/app/modules/url_analytics/schema.py linguist-vendored
-backend/app/modules/url_analytics/models.py linguist-vendored
-backend/app/modules/url_analytics/kafka_producer_dlq.py linguist-vendored
-backend/app/modules/url_shortener/schema.py linguist-vendored
-backend/app/modules/url_shortener/models.py linguist-vendored
-backend/app/modules/url_shortener/security.py linguist-vendored
-backend/app/modules/url_shortener/repository.py linguist-vendored 
+backend/app/services/url_analytics/schema.py linguist-vendored
+backend/app/services/url_analytics/models.py linguist-vendored
+backend/app/services/url_analytics/kafka_producer_dlq.py linguist-vendored
+backend/app/services/url_shortener/schema.py linguist-vendored
+backend/app/services/url_shortener/models.py linguist-vendored
+backend/app/services/url_shortener/security.py linguist-vendored
+backend/app/services/url_shortener/repository.py linguist-vendored 
