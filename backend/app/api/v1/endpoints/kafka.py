@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.modules.url_analytics.kafka_lag import get_consumer_lag
+from app.services.url_analytics.kafka_lag import get_consumer_lag
 
 router = APIRouter()
 

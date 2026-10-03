@@ -1,6 +1,6 @@
 import datetime
 from app.clients.redis import redis_client
-from app.modules.url_analytics.schema import (
+from app.services.url_analytics.schema import (
     UrlStatsResponse, LinkInfo, SummaryInfo, ClicksByDayItem,
 )
 

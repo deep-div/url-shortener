@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.redis import redis_client
 from app.core.config import settings
 from app.core.logging import logger
-from app.modules.url_shortener.schema import ShortenResponse
-from app.modules.url_shortener.generate_code import generate_code
-from app.modules.url_shortener.repository import UrlRepository
+from app.services.url_shortener.schema import ShortenResponse
+from app.services.url_shortener.generate_code import generate_code
+from app.services.url_shortener.repository import UrlRepository
 
 REDIS_TTL = 60 * 60 * 24 * 365
 BASE_URL = settings.BASE_URL.rstrip("/")

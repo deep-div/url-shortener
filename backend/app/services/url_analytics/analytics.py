@@ -7,12 +7,12 @@ import pytz
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.url_analytics.schema import (
+from app.services.url_analytics.schema import (
     AnalyticsResponse, UrlStatsResponse, ClicksByDayItem,
     LinkInfo, SummaryInfo, DeviceType,
 )
-from app.modules.url_analytics.repository import UrlRepository
-from app.modules.url_analytics.redis_counter import (
+from app.services.url_analytics.repository import UrlRepository
+from app.services.url_analytics.redis_counter import (
     increment_clicks_batch, get_live_snapshot,
     cache_exists, get_cached_stats, set_cached_stats,
 )

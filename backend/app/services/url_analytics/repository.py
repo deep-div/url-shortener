@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date, extract
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from app.modules.url_analytics.models import Analytics, UniqueIp
-from app.modules.url_shortener.models import Url
+from app.services.url_analytics.models import Analytics, UniqueIp
+from app.services.url_shortener.models import Url
 
 
 class UrlRepository:

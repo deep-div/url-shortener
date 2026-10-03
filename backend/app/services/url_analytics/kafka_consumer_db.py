@@ -5,31 +5,31 @@ from aiokafka import AIOKafkaConsumer
 from app.clients.kafka import get_kafka_client
 from app.core.config import settings
 from app.core.logging import logger
-from app.modules.url_analytics.analytics import run_url_analytics_redis
-from app.modules.url_analytics.kafka_producer_dlq import send_to_dlq
+from app.services.url_analytics.analytics import run_url_analytics_batch
+from app.services.url_analytics.kafka_producer_dlq import send_to_dlq
 
-BATCH_SIZE = 3000
-BATCH_TIMEOUT_SECS = 2
+BATCH_SIZE = 10000
+BATCH_TIMEOUT_SECS = 10
 
 
 async def start_consumer() -> None:
     consumer = AIOKafkaConsumer(
         settings.KAFKA_CLICKS_TOPIC,
         **get_kafka_client(),
-        group_id="url-analytics-redis",
-        group_instance_id=f"url-analytics-redis-{settings.WORKER_ID}",
+        group_id="url-analytics-consumer",
+        group_instance_id=f"url-analytics-consumer-{settings.WORKER_ID}",
         session_timeout_ms=30000,
         heartbeat_interval_ms=10000,
         auto_offset_reset="earliest",
-        enable_auto_commit=False,
+        enable_auto_commit=False,  # I will commit offsets myself kafka cant commit it 
         value_deserializer=lambda v: json.loads(v.decode()),
     )
     await consumer.start()
-    logger.info("Kafka Redis consumer started")
+    logger.info("Kafka DB consumer started")
 
     try:
         buffer = []
-        deadline = None
+        deadline = None  # starts only when first message arrives
 
         while True:
             remaining_ms = max(0, int((deadline - asyncio.get_event_loop().time()) * 1000)) if deadline else BATCH_TIMEOUT_SECS * 1000
@@ -49,9 +49,9 @@ async def start_consumer() -> None:
 
             if buffer and (time_up or batch_full):
                 reason = "batch_full" if batch_full else "time_up"
-                logger.info(f"Redis consumer flushing {len(buffer)} events — reason: {reason}")
+                logger.info(f"DB consumer flushing {len(buffer)} events — reason: {reason}")
                 try:
-                    await run_url_analytics_redis(buffer)
+                    await run_url_analytics_batch(buffer)
                     await consumer.commit()
                 except Exception as e:
                     offsets = {
@@ -59,14 +59,14 @@ async def start_consumer() -> None:
                         for tp in consumer.assignment()
                     }
                     logger.error(
-                        f"Redis consumer batch failed — pushing {len(buffer)} messages to DLQ. "
+                        f"Batch failed — pushing {len(buffer)} messages to DLQ. "
                         f"Offsets: {offsets}. Error: {e}",
                         exc_info=True,
                     )
                     dlq_messages = [
                         {
                             "source_topic": settings.KAFKA_CLICKS_TOPIC,
-                            "consumer_group": "url-analytics-redis",
+                            "consumer_group": "url-analytics-consumer",
                             "partitions": offsets,
                             "failed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M"),
                             "error": str(e),
@@ -89,4 +89,4 @@ async def start_consumer() -> None:
 
     finally:
         await consumer.stop()
-        logger.info("Kafka Redis consumer stopped")
+        logger.info("Kafka consumer stopped")

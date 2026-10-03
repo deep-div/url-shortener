@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from app.clients.redis import redis_client
 from app.core.logging import logger
-from app.modules.url_shortener.security import extract_code
+from app.services.url_shortener.security import extract_code
 
 router = APIRouter()
 

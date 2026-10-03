@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.modules.url_shortener.models import Url
+from app.services.url_shortener.models import Url
 
 
 class UrlRepository:

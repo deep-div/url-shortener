@@ -3,11 +3,11 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
 from app.clients.postgresql import get_db
-from app.modules.url_shortener.security import validate_url, extract_code
-from app.modules.url_shortener.shorten import run_url_shortener, run_resolve_code
-from app.modules.url_analytics.analytics import get_url_stats 
-from app.modules.url_shortener.kafka_producer_clicks import dispatch_click_event
-from app.modules.url_analytics.schema import UrlStatsResponse
+from app.services.url_shortener.security import validate_url, extract_code
+from app.services.url_shortener.shorten import run_url_shortener, run_resolve_code
+from app.services.url_analytics.analytics import get_url_stats 
+from app.services.url_shortener.kafka_producer_clicks import dispatch_click_event
+from app.services.url_analytics.schema import UrlStatsResponse
 
 router = APIRouter()
 
