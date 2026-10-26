@@ -609,7 +609,7 @@ img, svg { display: block; }
   .hero-stat-item { justify-content: flex-start; padding: 20px 18px; }
 }
 @media (max-width: 768px) {
-  .hero { padding-top: 240px; }
+  .hero { padding-top: 135px; }
   .hero-title { letter-spacing: -1.5px; font-size: clamp(34px, 9vw, 60px); margin-bottom: 28px; }
   .url-form-inner { flex-direction: column; gap: 8px; padding: 12px; }
   .url-input-wrap { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
