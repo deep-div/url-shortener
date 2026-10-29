@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str
     ENVIRONMENT: str
 
-    KAFKA_ENABLED: bool
+    KAFKA_ENABLED: bool = False
     KAFKA_SERVICE_URI: str | None = None
     KAFKA_HOST: str | None = None
     KAFKA_PORT: int | None = None
