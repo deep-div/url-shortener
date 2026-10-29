@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from alembic import context
 
 from app.clients.postgresql import DATABASE_URL, Base
-import app.modules.url_shortener.models  # noqa: F401 — registers Url with Base.metadata
-import app.modules.url_analytics.models  # noqa: F401 — registers Analytics, UniqueIp with Base.metadata
+import app.services.shortener.models  # noqa: F401 — registers Url with Base.metadata
+import app.services.analytics.models  # noqa: F401 — registers Analytics, UniqueIp with Base.metadata
 
 config = context.config
 

@@ -7,10 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.router import router
 from app.clients.geoip import init_geoip
 from app.core.config import settings
-from app.services.url_shortener.kafka_producer_clicks import start_producer, stop_producer
-from app.services.url_analytics.kafka_producer_dlq import start_dlq_producer, stop_dlq_producer
-from app.services.url_analytics.kafka_consumer_db import start_consumer as start_db_consumer
-from app.services.url_analytics.kafka_consumer_redis import start_consumer as start_redis_consumer
+from app.services.shortener.kafka_producer_clicks import start_producer, stop_producer
+from app.services.analytics.kafka_producer_dlq import start_dlq_producer, stop_dlq_producer
+from app.services.analytics.kafka_consumer_db import start_consumer as start_db_consumer
+from app.services.analytics.kafka_consumer_redis import start_consumer as start_redis_consumer
 from app.core.logging import logger
 
 

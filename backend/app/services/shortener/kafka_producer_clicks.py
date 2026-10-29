@@ -54,7 +54,7 @@ async def process_click_event_direct(code: str, request: Request) -> None:
     """KAFKA_ENABLED=False path — runs the exact same DB + Redis pipeline
     that the Kafka consumers call, just inline for this one click instead of
     batched across many. Fine for low-traffic deployments, no Kafka needed."""
-    from app.services.url_analytics.analytics import (
+    from app.services.analytics.analytics import (
         run_url_analytics_batch, run_url_analytics_redis,
     )
 
