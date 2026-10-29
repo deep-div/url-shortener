@@ -15,18 +15,7 @@ services:
       - BASE_URL=http://localhost
     volumes:
       - ./backend/.logs:/app/backend/.logs
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: url-shortner-redis
-    env_file:
-      - ./backend/.env
-    entrypoint: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_KEY\" --appendonly yes"]
-    volumes:
-      - redis-data:/data
+      - redis-data:/var/lib/redis
     restart: unless-stopped
 
 volumes:

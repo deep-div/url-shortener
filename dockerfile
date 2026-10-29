@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     python3-venv \
+    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Kong runtime config — DB-less (declarative), listens on 0.0.0.0:80.

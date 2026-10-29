@@ -5,7 +5,7 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    REDIS_HOST: str = "redis"
+    REDIS_HOST: str = "localhost"
     REDIS_KEY: str = ""
     REDIS_PORT: int = 6379
 

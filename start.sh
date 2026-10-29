@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+echo "Starting redis..."
+mkdir -p /var/lib/redis
+redis-server --bind 127.0.0.1 --port 6379 --requirepass "$REDIS_KEY" --dir /var/lib/redis --appendonly yes --daemonize no &
+
+echo "Waiting for redis to be ready..."
+until redis-cli -a "$REDIS_KEY" --no-auth-warning ping 2>/dev/null | grep -q PONG; do sleep 0.5; done
+
 echo "Starting backend..."
 cd /app/backend
 uvicorn app.main:app --host 127.0.0.1 --port 8000 &
