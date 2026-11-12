@@ -2,10 +2,7 @@
 
 *.sh text eol=lf
 
-# Exclude select backend (Python) folders/files from GitHub's Linguist
-# language stats on the repo overview page. This only affects language
-# detection/diff collapsing metadata - it does not modify, hide, or delete
-# any files.
+
 backend/alembic/** linguist-vendored
 backend/app/api/** linguist-vendored
 backend/app/clients/** linguist-vendored
